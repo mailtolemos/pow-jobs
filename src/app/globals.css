@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html, body {
+  background: #FAFAF7;
+  color: #0B1220;
+}
+
+body {
+  font-feature-settings: "ss01", "cv02", "cv11";
+}
+
+/* Prose tweaks */
+.prose-tight p { margin: 0.5rem 0; }
