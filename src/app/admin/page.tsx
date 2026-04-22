@@ -3,9 +3,9 @@ import { JobCard } from "@/components/JobCard";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminPage() {
-  const jobs = listJobs({ openOnly: false });
-  const candidates = listCandidates();
+export default async function AdminPage() {
+  const jobs = await listJobs({ openOnly: false });
+  const candidates = await listCandidates();
 
   const byDomain: Record<string, number> = {};
   for (const j of jobs) byDomain[j.domain] = (byDomain[j.domain] || 0) + 1;

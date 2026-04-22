@@ -5,53 +5,72 @@
 > — comp floor, jurisdiction, domain, token upside, dealbreakers — and only send
 > what's worth your time. Silence when there's nothing good.
 
-This is a working **prototype** of the product described in the PoW Jobs PRD.
-It runs locally against SQLite with 30 demo jobs and 3 candidate personas,
-and can optionally use the Claude API as the LLM judge in the matching pipeline.
+Live at **https://pow-jobs.vercel.app**.
+
+This repo is the working product: Neon Postgres, passwordless magic-link auth,
+a full profile editor with LinkedIn paste-import, a personalized matching feed,
+a weekly email digest, and Telegram alerts — all wired into a daily Vercel Cron
+that only sends roles that clear each user's personal precision floor.
 
 ---
 
-## Quick start
+## Quick start (local dev)
 
 ```bash
 # 1. Install deps
 npm install
 
-# 2. (optional) Configure your Claude API key
+# 2. Configure env vars
 cp .env.example .env.local
-# edit .env.local to add ANTHROPIC_API_KEY — if you skip this, the matcher
-# falls back to a deterministic heuristic scorer.
+# At minimum set DATABASE_URL (Neon) and AUTH_SECRET.
+# Everything else has a dev-mode fallback (magic-link URL is logged to stdout
+# if RESEND_API_KEY is unset, matcher uses structured scoring if no Claude key).
 
-# 3. Seed the local SQLite DB with 30 jobs and 3 personas
-npm run seed
+# 3. Create tables + seed 30 demo jobs + 3 demo personas
+npm run migrate     # idempotent — safe to re-run
+npm run seed        # demo jobs and personas
 
-# 4. Run the CLI match demo (no server needed)
-npm run match-demo
-
-# 5. Or start the full web UI
+# 4. Start the dev server
 npm run dev
 # → http://localhost:3000
 ```
 
-If you're on a filesystem that doesn't support SQLite WAL mode (e.g. some FUSE
-mounts), set `DATABASE_PATH=/tmp/pow-jobs.db` when running any command.
+Sign in at `/signin` with any email address. In dev the magic-link URL is
+printed to the server console and surfaced in the sign-in response so you can
+click through without configuring Resend.
 
 ---
 
-## What this prototype demonstrates
+## What's in the app
 
-### 1. The three strategic rails from the PRD
-- **Deep onboarding** — single structured schema per candidate (preferences,
-  weights, hard filters, dealbreakers, identity mode). See `src/lib/types.ts`
-  and `/onboarding`.
-- **Precision floor over recall** — per-candidate threshold; sub-threshold weeks
-  send *silence*. See `precisionFloorFor()` in `src/lib/matching.ts` and the
-  "Show silence week" toggle on `/email-preview`.
-- **Bilingual crypto + finance** — domain taxonomy covers `crypto:defi`,
-  `crypto:trading`, `finance:systematic`, `finance:hft`, etc. Cross-domain
-  candidates (e.g. Jane Street trader exploring Jump Crypto) match cleanly.
+### Candidate-facing surface
+- `/` — landing
+- `/signin` — email-only magic-link sign-in (Resend)
+- `/profile` — full structured profile editor:
+  - identity mode (real / pseudonym / wallet) + LinkedIn paste import
+  - career (seniority band, years, comp floor, jurisdiction, remote, regulated, visa)
+  - interests (domains, functions, tech stack)
+  - hard filters (dealbreakers)
+  - four weight sliders (comp / domain fit / team / token)
+  - alert settings (email on/off, frequency daily|weekly|realtime, Telegram on/off + link flow)
+- `/feed` — live matching; toggle between **Your feed** (signed-in user) and demo personas
+- `/email-preview` — HTML preview of the weekly digest (with "silence week" toggle)
+- `/admin` — raw data browser (admin-gated via `users.is_admin`)
 
-### 2. The hybrid matching pipeline
+### Behind the scenes
+- `/api/auth/signin` → `/api/auth/verify` — magic-link flow, JWT session cookie
+- `/api/profile` — PATCH the signed-in user's profile
+- `/api/profile/linkedin-import` — paste About/Experience → structured patch
+  (Claude if `ANTHROPIC_API_KEY` set, otherwise regex heuristics)
+- `/api/profile/telegram-link` — rotate a one-time link token for the bot
+- `/api/telegram/webhook` — Telegram bot webhook (`/start <token>` linking)
+- `/api/match` — score jobs for a candidate
+- `/api/cron/alerts` — daily dispatcher, called by Vercel Cron
+
+---
+
+## The matching pipeline
+
 `src/lib/matching.ts` implements:
 
 ```
@@ -67,26 +86,68 @@ final_score = 0.6 * structured + 0.4 * llm    (or structured only)
    ↓
 precision_floor (per-candidate)
    ↓
-digest
+digest (email + Telegram, deduped per channel via sent_alerts)
 ```
 
-The LLM judge is **optional by design** — no API key required to use the
-prototype. A deterministic heuristic rationale is generated either way.
+The LLM judge is **optional by design** — no API key required to run the app.
+A deterministic heuristic rationale is generated either way.
 
-### 3. The full candidate surface
-- `/` — landing page with positioning
-- `/onboarding` — six-step walkthrough (what we ask, why, demo examples)
-- `/feed` — live matching UI; switch personas, toggle LLM, toggle precision floor
-- `/email-preview` — weekly digest rendered in an iframe; toggle the silence
-  scenario
-- `/admin` — browse all seeded jobs and candidates
+---
 
-### 4. Demo personas exercised by the matcher
-| Persona | Identity | Angle | Shape of matches |
-|---|---|---|---|
-| **0xHaru** | pseudonymous | Solidity/Rust founding engineer, 8 yr, global-remote, token-friendly | Heavy crypto-infra + DeFi, Jump Crypto / Uniswap / Symbiotic |
-| **Priya Chen** | real name | Citadel quant researcher, 12 yr, US-only, no seed-stage, no unregulated | Pure TradFi — Citadel, Two Sigma, Point72, Millennium |
-| **Marco Ferrari** | real name | Jane Street trader, 5 yr, hybrid, open to both worlds | Mixed — SIG / Jump Crypto / Wintermute |
+## Alerts
+
+`vercel.json` registers two crons that hit `/api/cron/alerts`:
+
+- **Daily** — `0 14 * * *` (14:00 UTC) for users with `alert_frequency = daily`
+- **Weekly** — `0 14 * * 1` (Mondays 14:00 UTC) for `alert_frequency = weekly`
+
+Per-channel dedup uses a `sent_alerts (candidate_id, job_id, channel)` unique
+index, so a cron retry (or manual run) never sends the same role twice.
+
+To trigger a single-user run manually (for testing):
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  "https://pow-jobs.vercel.app/api/cron/alerts?candidateId=<id>&dryRun=0"
+```
+
+---
+
+## Telegram bot setup
+
+1. Message `@BotFather` on Telegram → `/newbot` → copy the token.
+2. Put the token in `TELEGRAM_BOT_TOKEN` (and the bot's public username, no `@`,
+   in `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`).
+3. Generate a webhook secret and register the webhook once:
+
+   ```bash
+   export TELEGRAM_WEBHOOK_SECRET=$(node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))")
+   curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook?url=$APP_URL/api/telegram/webhook&secret_token=$TELEGRAM_WEBHOOK_SECRET"
+   ```
+
+4. On the Profile page, users click **Generate link code** and follow the
+   `t.me/<bot>?start=<code>` deep link. The webhook consumes the one-time code
+   and stores the chat_id.
+
+---
+
+## Deploying
+
+1. Create a **Neon** project (free tier) → copy the pooled connection string into
+   `DATABASE_URL`.
+2. Create a **Resend** project → add API key to `RESEND_API_KEY`. Either verify
+   a sending domain, or use `onboarding@resend.dev` for the first 100 emails.
+3. Generate `AUTH_SECRET` and `CRON_SECRET`:
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+   ```
+4. Push all env vars into the Vercel project (**Settings → Environment
+   Variables**). `APP_URL` should be the canonical deploy URL.
+5. Deploy. On first request the app calls `ensureSchema()` and creates all
+   tables idempotently — no separate migration step needed for fresh projects.
+   For existing projects, `npm run migrate` runs the same schema SQL.
+
+See `.env.example` for the full variable checklist.
 
 ---
 
@@ -96,58 +157,38 @@ prototype. A deterministic heuristic rationale is generated either way.
 src/
   app/
     layout.tsx, page.tsx, globals.css
-    onboarding/page.tsx
-    feed/page.tsx
-    email-preview/page.tsx
-    admin/page.tsx
+    signin/page.tsx                 magic-link sign-in
+    profile/                        profile editor (auth required)
+      page.tsx, ProfileEditor.tsx
+    feed/                           personalized match feed
+      page.tsx, FeedClient.tsx
+    email-preview/page.tsx          digest preview
+    admin/page.tsx                  admin-gated
     api/
-      candidates/route.ts       GET list
-      jobs/route.ts             GET list
-      match/route.ts            POST — run matcher, return ranked list
+      auth/{signin,verify,signout}/route.ts
+      profile/{route,linkedin-import,telegram-link}/route.ts
+      candidates/route.ts, jobs/route.ts, match/route.ts
+      cron/alerts/route.ts          Vercel Cron target
+      telegram/webhook/route.ts     Telegram bot webhook
   components/
-    Nav.tsx, JobCard.tsx
+    Nav.tsx, JobCard.tsx, ChipGroup.tsx, WeightSlider.tsx
   lib/
-    types.ts            Core TypeScript interfaces (Job, Candidate, MatchScore)
-    schema.sql          SQLite DDL (jobs, candidates, matches, interactions)
-    db.ts               better-sqlite3 wrapper + row<>object conversion
-    seed-data.ts        30 jobs (15 crypto, 15 finance) + 3 personas
-    matching.ts         Hard filters, structured score, precision floor, orchestration
-    llm.ts              Claude API wrapper (optional; null if no key)
-    email.ts            Inline-styled HTML digest renderer
+    types.ts                Candidate / Job / MatchScore / ...
+    schema.ts               idempotent Postgres DDL
+    db.ts                   Neon serverless wrapper
+    auth.ts                 JWT session + cookie helpers
+    mailer.ts               Resend wrapper (+ dev-mode stdout fallback)
+    telegram.ts             Telegram Bot API wrapper
+    alerts.ts               per-user dispatcher (email + Telegram)
+    matching.ts             hard filters, structured score, precision floor
+    llm.ts                  Claude API wrapper (optional)
+    email.ts                inline-styled HTML digest renderer
+    seed-data.ts            30 jobs + 3 demo personas
 scripts/
-  seed.ts               npm run seed
-  match-demo.ts         npm run match-demo (CLI demo of the whole loop)
+  migrate.ts                npm run migrate — ensure schema
+  seed.ts                   npm run seed    — demo data
+vercel.json                 cron schedules
 ```
-
----
-
-## From prototype to production — what's missing
-
-This prototype intentionally stops short of the full production scope so the
-matching loop can be understood end-to-end in one evening. To ship the product
-in the PRD, you'd need:
-
-1. **Auth & real accounts** — replace `listCandidates()` hardcoded personas with
-   Clerk/Auth.js-backed candidate accounts. Add identity verification paths for
-   the three modes (real / pseudonym / wallet).
-2. **Ingestion pipeline** — upstream aggregators (Greenhouse/Lever APIs, OA
-   parsers, manual curator tools) that produce the structured `Job` rows the
-   matcher consumes. Right now jobs are hand-written.
-3. **Postgres + job queue** — SQLite is fine for demo. In prod, swap to
-   Postgres with pgvector for embedding retrieval, and a job queue (Inngest /
-   Trigger.dev) for weekly digest generation and re-scoring on new jobs.
-4. **Actual email delivery** — wire `renderDigestHTML` to Postmark / Resend and
-   schedule a weekly worker that applies the precision floor per candidate.
-5. **Employer side** — currently only the candidate surface. Employer dashboard,
-   subscription billing ($2–5k/mo gated reach-outs, per the PRD), and match
-   visibility without PII leakage.
-6. **Collaborative filtering signal** — the `interactions` table is already in
-   the schema; once there are enough saves/dismisses across ~3k users, layer a
-   "candidates like you also looked at…" signal on top of the content-based
-   score.
-7. **Evals** — a test harness that replays a golden-set of (candidate, job,
-   expected_verdict) tuples against every matcher change, so changes to weights
-   or the LLM prompt can't silently regress precision.
 
 ---
 
@@ -157,10 +198,17 @@ in the PRD, you'd need:
 |---|---|
 | `npm run dev` | Next.js dev server on `:3000` |
 | `npm run build` | Production build |
-| `npm run seed` | Insert 30 jobs + 3 candidates into SQLite |
-| `npm run match-demo` | CLI: score all jobs for every candidate, print top 5 |
-| `npm run match-demo -- cand_bridge_001` | Same, one candidate |
+| `npm run migrate` | Run idempotent Postgres schema (creates tables if missing) |
+| `npm run seed` | Insert 30 demo jobs + 3 demo candidates |
 | `npm run typecheck` | `tsc --noEmit` |
+
+## Demo personas
+
+| Persona | Identity | Angle | Shape of matches |
+|---|---|---|---|
+| **0xHaru** | pseudonymous | Solidity/Rust founding engineer, 8 yr, global-remote, token-friendly | Heavy crypto-infra + DeFi, Jump Crypto / Uniswap / Symbiotic |
+| **Priya Chen** | real name | Citadel quant researcher, 12 yr, US-only, no seed-stage, no unregulated | Pure TradFi — Citadel, Two Sigma, Point72, Millennium |
+| **Marco Ferrari** | real name | Jane Street trader, 5 yr, hybrid, open to both worlds | Mixed — SIG / Jump Crypto / Wintermute |
 
 ## License
 

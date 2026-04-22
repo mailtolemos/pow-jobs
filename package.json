@@ -1,27 +1,28 @@
 {
   "name": "pow-jobs",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "PoW Jobs — candidate-first job matching for finance and crypto",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "migrate": "tsx scripts/migrate.ts",
     "seed": "tsx scripts/seed.ts",
-    "match-demo": "tsx scripts/match-demo.ts",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",
-    "better-sqlite3": "^11.3.0",
+    "@neondatabase/serverless": "^0.10.3",
+    "jose": "^5.9.6",
     "next": "14.2.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "resend": "^4.0.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^20.16.10",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",

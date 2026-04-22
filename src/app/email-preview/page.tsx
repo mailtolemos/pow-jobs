@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default async function EmailPreviewPage({ searchParams }: Props) {
-  const candidates = listCandidates();
+  const candidates = await listCandidates({ demoOnly: true });
   const activeId = searchParams.c || candidates[0]?.id;
   const silence = searchParams.silence === "1";
 
@@ -22,16 +22,27 @@ export default async function EmailPreviewPage({ searchParams }: Props) {
     );
   }
 
-  const candidate = getCandidate(activeId)!;
+  const candidate = await getCandidate(activeId);
+  if (!candidate) {
+    return (
+      <div className="max-w-3xl mx-auto px-6 py-16">
+        <div className="text-neutral-600">Candidate not found.</div>
+      </div>
+    );
+  }
   const threshold = precisionFloorFor(candidate);
 
   // Use structured-only scoring here so the email preview is deterministic and doesn't hit the API.
   const all = await computeAllMatches(activeId, { useLLM: false });
   const kept = silence ? [] : applyPrecisionFloor(all, candidate);
-  const items = kept
-    .slice(0, 5)
-    .map((m) => ({ match: m, job: getJob(m.job_id)! }))
-    .filter((x) => x.job);
+  const items = (
+    await Promise.all(
+      kept.slice(0, 5).map(async (m) => {
+        const job = await getJob(m.job_id);
+        return job ? { match: m, job } : null;
+      }),
+    )
+  ).filter((x): x is { match: (typeof kept)[number]; job: NonNullable<Awaited<ReturnType<typeof getJob>>> } => x !== null);
 
   const html = renderDigestHTML({
     candidate,

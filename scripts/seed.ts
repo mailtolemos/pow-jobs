@@ -1,19 +1,23 @@
-// Seed the local SQLite DB with demo jobs and candidates.
-// Usage: npm run seed
+// Seed the Postgres DB with demo jobs and candidates. Safe to re-run.
+// Usage: DATABASE_URL=postgres://... npm run seed
 
-import { upsertJob, upsertCandidate, listJobs, listCandidates } from "../src/lib/db";
+import { upsertJob, upsertCandidate, listJobs, listCandidates, ensureSchema } from "../src/lib/db";
 import { SEED_JOBS, SEED_CANDIDATES } from "../src/lib/seed-data";
 
-function main() {
+async function main() {
+  await ensureSchema();
   console.log(`[seed] inserting ${SEED_JOBS.length} jobs...`);
-  for (const j of SEED_JOBS) upsertJob(j);
+  for (const j of SEED_JOBS) await upsertJob(j);
 
-  console.log(`[seed] inserting ${SEED_CANDIDATES.length} candidates...`);
-  for (const c of SEED_CANDIDATES) upsertCandidate(c);
+  console.log(`[seed] inserting ${SEED_CANDIDATES.length} demo candidates...`);
+  for (const c of SEED_CANDIDATES) await upsertCandidate(c, null);
 
-  const jobsCount = listJobs({ openOnly: false }).length;
-  const candsCount = listCandidates().length;
-  console.log(`[seed] done. jobs=${jobsCount} candidates=${candsCount}`);
+  const jobs = await listJobs({ openOnly: false });
+  const cands = await listCandidates();
+  console.log(`[seed] done. jobs=${jobs.length} candidates=${cands.length}`);
 }
 
-main();
+main().catch((err) => {
+  console.error("[seed] failed:", err);
+  process.exit(1);
+});
