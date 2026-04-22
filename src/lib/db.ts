@@ -32,12 +32,20 @@ export function ensureSchema(): Promise<void> {
     const s = sql();
     // Neon's http driver does not support multi-statement transactions via
     // tagged-template calls, so split and run statements individually.
+    // Strip leading line comments from each statement before filtering, so that
+    // a CREATE ... statement preceded by comments still gets executed.
+    const stripLeadingComments = (str: string): string =>
+      str
+        .split("\n")
+        .filter((line) => !/^\s*--/.test(line))
+        .join("\n")
+        .trim();
+
     const statements = SCHEMA_SQL.split(/;\s*(?:\n|$)/)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0 && !s.startsWith("--"));
+      .map((raw) => stripLeadingComments(raw))
+      .filter((stmt) => stmt.length > 0 && /^[A-Z]/i.test(stmt));
+
     for (const stmt of statements) {
-      // Skip pure comment blocks
-      if (!/^[A-Z]/i.test(stmt)) continue;
       // Neon's query function is directly callable with a raw SQL string.
       await s(stmt);
     }
@@ -236,7 +244,7 @@ export async function upsertCandidate(c: Candidate, userId: string | null = null
   await sql()`
     INSERT INTO candidates (
       id, user_id, display_name, identity_mode, headline,
-      years_experience, current_role, current_employer, education,
+      years_experience, "current_role", current_employer, education,
       linkedin_url, github_url, farcaster_handle, wallet_address,
       domains_of_interest, functions, seniority_band, tech_stack,
       comp_floor_usd, jurisdiction_ok, remote_policy_ok, visa_needed, max_regulated_ok,
@@ -261,7 +269,7 @@ export async function upsertCandidate(c: Candidate, userId: string | null = null
       identity_mode = EXCLUDED.identity_mode,
       headline = EXCLUDED.headline,
       years_experience = EXCLUDED.years_experience,
-      current_role = EXCLUDED.current_role,
+      "current_role" = EXCLUDED."current_role",
       current_employer = EXCLUDED.current_employer,
       education = EXCLUDED.education,
       linkedin_url = EXCLUDED.linkedin_url,

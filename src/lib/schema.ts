@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS candidates (
   identity_mode TEXT NOT NULL,
   headline TEXT NOT NULL,
   years_experience INTEGER NOT NULL DEFAULT 0,
-  current_role TEXT NOT NULL DEFAULT '',
+  "current_role" TEXT NOT NULL DEFAULT '',
   current_employer TEXT NOT NULL DEFAULT '',
   education TEXT NOT NULL DEFAULT '',
   linkedin_url TEXT,
