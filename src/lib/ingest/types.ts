@@ -35,6 +35,9 @@ export interface IngestResult {
   skipped: number; // e.g. non-english, or filtered
   llm_classified: number; // roles successfully classified by Claude
   llm_errors: string[]; // first few classifier error strings (for debugging)
+  broadcast_configured: boolean; // true iff TELEGRAM_BROADCAST_CHAT_ID is set
+  broadcast_sent: number; // new jobs that were broadcast to the Telegram channel
+  broadcast_errors: string[]; // Telegram API failures, surfaced for debugging
   errors: string[];
   duration_ms: number;
 }

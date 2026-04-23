@@ -16,6 +16,9 @@ interface FetchReport {
   updated: number;
   llm_classified?: number;
   llm_errors?: string[];
+  broadcast_configured?: boolean;
+  broadcast_sent?: number;
+  broadcast_errors?: string[];
   errors: string[];
   duration_ms: number;
 }
@@ -139,6 +142,27 @@ export function AdminSourcesClient({ initial }: Props) {
             <div className="text-xs mt-1">
               LLM classified {lastReport.llm_classified} / {lastReport.fetched} (others used heuristic fallback).
             </div>
+          )}
+          <div className="text-xs mt-1">
+            {lastReport.broadcast_configured === false ? (
+              <>
+                📡 Telegram broadcast <b>not configured</b> —
+                set <code className="bg-amber-100 px-1 rounded">TELEGRAM_BROADCAST_CHAT_ID</code>
+                {" "}on Vercel and redeploy to enable.
+              </>
+            ) : (
+              <>
+                📡 Telegram: sent {lastReport.broadcast_sent ?? 0} / {lastReport.created} new roles.
+              </>
+            )}
+          </div>
+          {(lastReport.broadcast_errors?.length ?? 0) > 0 && (
+            <details className="mt-1 text-xs">
+              <summary>{lastReport.broadcast_errors!.length} broadcast error(s)</summary>
+              <ul className="mt-1 list-disc pl-5 font-mono text-[11px]">
+                {lastReport.broadcast_errors!.map((e, i) => <li key={i}>{e}</li>)}
+              </ul>
+            </details>
           )}
           {(lastReport.llm_errors?.length ?? 0) > 0 && (
             <details className="mt-1 text-xs">

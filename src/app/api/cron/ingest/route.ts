@@ -35,6 +35,9 @@ export async function GET(req: Request) {
         skipped: 0,
         llm_classified: 0,
         llm_errors: [],
+        broadcast_configured: false,
+        broadcast_sent: 0,
+        broadcast_errors: [],
         errors: [`fatal: ${(e as Error).message}`],
         duration_ms: 0,
       });

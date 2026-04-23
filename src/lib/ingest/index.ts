@@ -52,6 +52,9 @@ export async function ingestSource(source: SourceRow): Promise<IngestResult> {
     skipped: 0,
     llm_classified: 0,
     llm_errors: [],
+    broadcast_configured: isBroadcastConfigured(),
+    broadcast_sent: 0,
+    broadcast_errors: [],
     errors: [],
     duration_ms: 0,
   };
@@ -93,11 +96,27 @@ export async function ingestSource(source: SourceRow): Promise<IngestResult> {
         result.updated += 1;
       } else {
         result.created += 1;
-        // Only broadcast brand-new jobs to the Telegram channel. Re-ingests
-        // (same external_id) are silent. Fire-and-forget: a failed Telegram
-        // post must never block the ingest pipeline.
-        if (isBroadcastConfigured()) {
-          broadcastJob(job).catch(() => undefined);
+        // Broadcast brand-new roles to the Telegram channel. We await the
+        // result (with a short timeout) so admins can see in the fetch report
+        // whether messages actually landed — but failures never block ingest.
+        if (result.broadcast_configured) {
+          try {
+            const bcast = (await Promise.race([
+              broadcastJob(job),
+              new Promise<{ ok: false; error: string }>((resolve) =>
+                setTimeout(() => resolve({ ok: false, error: "broadcast timed out after 5s" }), 5000),
+              ),
+            ])) as { ok: boolean; error?: string };
+            if (bcast.ok) {
+              result.broadcast_sent += 1;
+            } else if (bcast.error && result.broadcast_errors.length < 5) {
+              result.broadcast_errors.push(`${job.title_raw}: ${bcast.error}`);
+            }
+          } catch (e) {
+            if (result.broadcast_errors.length < 5) {
+              result.broadcast_errors.push(`${job.title_raw}: ${(e as Error).message}`);
+            }
+          }
         }
       }
       if (llm_used) {
