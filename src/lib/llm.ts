@@ -100,40 +100,59 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, Math.max(0, ms)));
 }
 
-async function groqRequest(key: string, opts: ChatOptions): Promise<Response> {
-  const body = {
-    model: GROQ_MODEL,
-    messages: [
-      { role: "system", content: opts.system },
-      { role: "user", content: opts.user },
-    ],
-    max_tokens: opts.maxTokens ?? 1024,
-    temperature: opts.temperature ?? 0.2,
-    // Ask Groq to emit JSON when possible; harmless for prose prompts.
-    response_format: { type: "json_object" as const },
-  };
-  return fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${key}`,
-    },
-    body: JSON.stringify(body),
-    cache: "no-store",
-  });
+
+async function groqRequestWithTimeout(key: string, opts: ChatOptions, timeoutMs: number): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const body = {
+      model: GROQ_MODEL,
+      messages: [
+        { role: "system", content: opts.system },
+        { role: "user", content: opts.user },
+      ],
+      max_tokens: opts.maxTokens ?? 1024,
+      temperature: opts.temperature ?? 0.2,
+      response_format: { type: "json_object" as const },
+    };
+    return await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      signal: ctrl.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function chatGroq(opts: ChatOptions): Promise<string> {
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Error("GROQ_API_KEY not set");
 
-  // Up to 2 retries on 429 (rate limit). Groq returns a retry-after hint
-  // ("Please try again in 4.21s") we can parse. Total cap of ~35s wait
-  // across retries — enough for the free-tier TPM window to refill.
+  // Retry on 429 (rate limit) and 5xx. Respect the retry-after hint but cap
+  // total wait so one call never burns the whole Vercel budget.
   const MAX_RETRIES = 2;
-  const MAX_WAIT_MS = 35_000;
+  const PER_CALL_TIMEOUT_MS = 20_000;
+  const MAX_WAIT_MS = 12_000; // per-attempt cap — keep total cost < 50s
+
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const res = await groqRequest(key, opts);
+    let res: Response;
+    try {
+      res = await groqRequestWithTimeout(key, opts, PER_CALL_TIMEOUT_MS);
+    } catch (e) {
+      // AbortError (timeout) or network glitch. Retry once with jittered backoff.
+      if (attempt < MAX_RETRIES) {
+        await sleep(500 + Math.floor(Math.random() * 500));
+        continue;
+      }
+      throw new Error(`Groq network: ${(e as Error).message}`);
+    }
+
     if (res.ok) {
       const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
       const content = data.choices?.[0]?.message?.content;
@@ -144,7 +163,7 @@ async function chatGroq(opts: ChatOptions): Promise<string> {
     const retryable = res.status === 429 || (res.status >= 500 && res.status < 600);
     if (retryable && attempt < MAX_RETRIES) {
       const hinted = parseRetryAfterMs(errText, res.headers.get("retry-after"));
-      // Add a small jitter so concurrent classifiers don't all unblock in lockstep.
+      // Cap wait per attempt so slow rate windows don't stall the call forever.
       const wait = Math.min(MAX_WAIT_MS, Math.max(500, hinted + 250 + Math.floor(Math.random() * 250)));
       await sleep(wait);
       continue;

@@ -551,6 +551,27 @@ export async function upsertMatch(m: MatchScore): Promise<void> {
   `;
 }
 
+// Return all cached matches for a candidate (including failed-filter rows),
+// for cache-aware scoring on /feed. Unlike getMatchesForCandidate, this
+// does NOT filter on hard_filter_pass — callers decide how to use the rows.
+export async function getAllCachedMatches(candidateId: string): Promise<MatchScore[]> {
+  await ensureSchema();
+  const rows = (await sql()`
+    SELECT * FROM matches WHERE candidate_id = ${candidateId}
+  `) as Row[];
+  return rows.map((r) => ({
+    job_id: r.job_id as string,
+    candidate_id: r.candidate_id as string,
+    score: r.score as number,
+    structured_score: r.structured_score as number,
+    llm_score: (r.llm_score as number | null) ?? null,
+    hard_filter_pass: Boolean(r.hard_filter_pass),
+    rationale: (r.rationale as string) ?? "",
+    failed_filters: (r.failed_filters as string[]) ?? [],
+    computed_at: toISO(r.computed_at),
+  }));
+}
+
 export async function getMatchesForCandidate(
   candidateId: string,
   limit = 50,

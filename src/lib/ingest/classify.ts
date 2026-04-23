@@ -176,6 +176,51 @@ ${descr}`;
 
 // --- Public entrypoint ------------------------------------------------------
 
+// Pure heuristic-only classify. No LLM call. Used as a hard fallback when
+// the ingest pipeline's circuit breaker trips, and for environments without
+// any LLM provider configured.
+export async function classifyHeuristic(inc: IncomingJob): Promise<{ job: Job }> {
+  const now = new Date().toISOString();
+  const id = inc.external_id;
+  const base = heuristicClassify(inc);
+  const description = inc.description_text?.slice(0, 2000) ?? inc.title;
+
+  const job: Job = {
+    id,
+    title_raw: inc.title,
+    title_normalized: inc.title.trim(),
+    employer: inc.employer,
+    employer_category: base.employer_category || "Crypto protocol",
+    domain: base.domain as Job["domain"],
+    function: base.function as Job["function"],
+    seniority: base.seniority as Job["seniority"],
+    tech_stack: (base.tech_stack as string[]) || [],
+    description,
+    base_min: inc.comp_min ?? null,
+    base_max: inc.comp_max ?? null,
+    bonus_pct_target: null,
+    token_pct_target: null,
+    carry_or_equity_pct: null,
+    vesting_years: null,
+    cliff_months: null,
+    location: inc.location,
+    remote_policy: base.remote_policy as Job["remote_policy"],
+    jurisdiction_required: base.jurisdiction_required as Job["jurisdiction_required"],
+    visa_sponsored: false,
+    regulated: false,
+    stage: base.stage as Job["stage"],
+    team_size_band: null,
+    aum_usd: null,
+    source_url: inc.source_url,
+    source_channel: inc.source_channel,
+    date_posted: inc.date_posted || now,
+    date_last_seen: now,
+    is_open: true,
+    employer_verified: false,
+  };
+  return { job };
+}
+
 export async function classifyIncoming(
   inc: IncomingJob,
 ): Promise<{ job: Job; llm_used: boolean; llm_error: string | null }> {

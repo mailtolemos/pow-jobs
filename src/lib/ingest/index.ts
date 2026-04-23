@@ -5,7 +5,7 @@ import { detectAshbySlug, fetchAshby } from "./ashby";
 import { detectGreenhouseToken, fetchGreenhouse } from "./greenhouse";
 import { detectLeverSlug, fetchLever } from "./lever";
 import { fetchHtmlCareerPage } from "./html";
-import { classifyIncoming } from "./classify";
+import { classifyIncoming, classifyHeuristic } from "./classify";
 import type { IncomingJob, IngestResult } from "./types";
 import { getJob, upsertJob, markSourceChecked, type SourceRow } from "../db";
 
@@ -65,17 +65,46 @@ export async function ingestSource(source: SourceRow): Promise<IngestResult> {
   }
   result.fetched = incoming.length;
 
-  // Classify + upsert. We run these serially to avoid hammering the LLM;
-  // for larger boards we can parallelize later with a small concurrency cap.
+  // Circuit breaker: if the LLM rate-limits us repeatedly, switch the rest
+  // of the batch to heuristic-only. Classify still succeeds (we always write
+  // a job row); LLM enrichment is best-effort, not mandatory. This keeps
+  // ingest under Vercel's 60s cap no matter what Groq is doing.
+  const TIME_BUDGET_MS = 50_000;
+  const FAILS_BEFORE_BREAK = 3;
+  let consecutiveFails = 0;
+  let breakerOpen = false;
+
   for (const inc of incoming) {
+    const remaining = TIME_BUDGET_MS - (Date.now() - started);
+    // If we've used most of the time budget, stop early — partial results
+    // beat a timed-out function that returns nothing.
+    if (remaining < 2000) {
+      result.errors.push(`time budget exhausted after ${result.created + result.updated} roles`);
+      break;
+    }
     try {
       const existing = await getJob(inc.external_id);
-      const { job, llm_used, llm_error } = await classifyIncoming(inc);
+      const { job, llm_used, llm_error } = breakerOpen
+        ? { ...(await classifyHeuristic(inc)), llm_used: false, llm_error: "skipped: LLM circuit breaker open" }
+        : await classifyIncoming(inc);
       await upsertJob(job);
       if (existing) result.updated += 1;
       else result.created += 1;
-      if (llm_used) result.llm_classified += 1;
-      if (llm_error && result.llm_errors.length < 5) result.llm_errors.push(`${inc.title}: ${llm_error}`);
+      if (llm_used) {
+        result.llm_classified += 1;
+        consecutiveFails = 0;
+      } else if (llm_error && !breakerOpen) {
+        consecutiveFails += 1;
+        if (result.llm_errors.length < 5) result.llm_errors.push(`${inc.title}: ${llm_error}`);
+        if (consecutiveFails >= FAILS_BEFORE_BREAK) {
+          breakerOpen = true;
+          result.llm_errors.push(
+            `circuit-breaker tripped after ${consecutiveFails} consecutive LLM failures; remaining ${
+              incoming.length - result.created - result.updated
+            } roles will use heuristic fallback`,
+          );
+        }
+      }
     } catch (e) {
       result.errors.push(`${inc.title}: ${(e as Error).message}`);
     }
