@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCandidate, getJob } from "@/lib/db";
 import { computeAllMatches, applyPrecisionFloor, precisionFloorFor } from "@/lib/matching";
-import { isLLMAvailable } from "@/lib/llm";
+import { isLLMAvailable, currentProvider, currentModel } from "@/lib/llm";
 import { getSessionUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +44,8 @@ export async function POST(req: Request) {
   return NextResponse.json({
     threshold: precisionFloorFor(candidate),
     llmAvailable: isLLMAvailable(),
+    llmProvider: currentProvider(),
+    llmModel: currentModel(),
     totalScored: all.length,
     totalKept: kept.length,
     totalHardFiltered: all.filter((m) => !m.hard_filter_pass).length,

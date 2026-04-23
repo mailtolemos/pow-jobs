@@ -2,7 +2,6 @@
 // Uses Claude when available to infer domain/seniority/tech_stack/etc.,
 // and falls back to crude heuristics so ingest never fully blocks on LLM.
 
-import Anthropic from "@anthropic-ai/sdk";
 import type { IncomingJob } from "./types";
 import type {
   Job,
@@ -13,17 +12,7 @@ import type {
   CompanyStage,
   Function as JobFunction,
 } from "../types";
-
-const MODEL = process.env.CLAUDE_MODEL || "claude-sonnet-4-6";
-
-let _client: Anthropic | null = null;
-function client(): Anthropic | null {
-  if (_client) return _client;
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return null;
-  _client = new Anthropic({ apiKey: key });
-  return _client;
-}
+import { chatJSON, isLLMAvailable } from "../llm";
 
 const ALL_DOMAINS: Domain[] = [
   "crypto:defi", "crypto:infra", "crypto:l1", "crypto:l2", "crypto:application",
@@ -166,8 +155,9 @@ interface LLMClassification {
 }
 
 async function llmClassify(inc: IncomingJob): Promise<{ data: LLMClassification | null; error: string | null }> {
-  const c = client();
-  if (!c) return { data: null, error: "ANTHROPIC_API_KEY not set" };
+  if (!isLLMAvailable()) {
+    return { data: null, error: "no LLM provider configured (set GROQ_API_KEY or ANTHROPIC_API_KEY)" };
+  }
   const descr = (inc.description_text || inc.description_html || "").slice(0, 8000);
   const user = `Employer: ${inc.employer}
 Title: ${inc.title}
@@ -179,32 +169,7 @@ Posted comp: ${inc.comp_min ?? "?"}–${inc.comp_max ?? "?"} ${inc.comp_currency
 
 Description:
 ${descr}`;
-
-  try {
-    const resp = await c.messages.create({
-      model: MODEL,
-      max_tokens: 1536,
-      system: SYSTEM,
-      messages: [{ role: "user", content: user }],
-    });
-    const text = resp.content
-      .filter((b) => b.type === "text")
-      .map((b) => ("text" in b ? b.text : ""))
-      .join("");
-    // Tolerate markdown fences and leading prose; extract the first {...} block
-    let cleaned = text.trim().replace(/^```json\s*/i, "").replace(/```$/, "").trim();
-    if (!cleaned.startsWith("{")) {
-      const m = cleaned.match(/\{[\s\S]*\}/);
-      if (m) cleaned = m[0];
-    }
-    try {
-      return { data: JSON.parse(cleaned) as LLMClassification, error: null };
-    } catch (e) {
-      return { data: null, error: `JSON parse failed: ${(e as Error).message}; head=${text.slice(0, 200)}` };
-    }
-  } catch (e) {
-    return { data: null, error: `Claude call failed: ${(e as Error).message}` };
-  }
+  return chatJSON<LLMClassification>({ system: SYSTEM, user, maxTokens: 1536 });
 }
 
 // --- Public entrypoint ------------------------------------------------------

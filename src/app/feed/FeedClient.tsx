@@ -14,6 +14,8 @@ import {
 interface MatchResponse {
   threshold: number;
   llmAvailable: boolean;
+  llmProvider?: "groq" | "anthropic" | "none";
+  llmModel?: string | null;
   totalScored: number;
   totalKept: number;
   totalHardFiltered: number;
@@ -191,7 +193,12 @@ function FeedDataSummary({ data }: { data: MatchResponse }) {
       <span>·</span>
       <span>Precision floor: {Math.round(data.threshold * 100)}%</span>
       <span>·</span>
-      <span>LLM: {data.llmAvailable ? "Claude" : "heuristic fallback"}</span>
+      <span>
+        LLM:{" "}
+        {data.llmAvailable
+          ? `${data.llmProvider ?? "on"}${data.llmModel ? ` (${data.llmModel})` : ""}`
+          : "heuristic fallback"}
+      </span>
     </div>
   );
 }

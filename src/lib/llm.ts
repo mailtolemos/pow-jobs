@@ -1,23 +1,149 @@
-// Claude API wrapper for LLM-as-judge job scoring.
-// Falls back to null if no API key is configured — caller must handle.
+// Unified LLM client used for:
+//   - Match scoring (scoreJobWithClaude — kept name for API compat)
+//   - Ingest classification (chatJSON in src/lib/ingest/classify.ts)
+//
+// Provider resolution order:
+//   1. GROQ_API_KEY → Groq Cloud (free tier; OpenAI-compatible chat completions)
+//   2. ANTHROPIC_API_KEY → Anthropic Claude
+//   3. Neither → null (callers fall back to heuristics)
+//
+// To switch providers, just set/unset the corresponding env var on Vercel and
+// redeploy. Model per provider can be overridden via GROQ_MODEL / CLAUDE_MODEL.
 
 import Anthropic from "@anthropic-ai/sdk";
 import type { Candidate, Job } from "./types";
 
-const MODEL = process.env.CLAUDE_MODEL || "claude-sonnet-4-6";
+// ---------- Provider plumbing ---------------------------------------------
 
-let _client: Anthropic | null = null;
-function getClient(): Anthropic | null {
-  if (_client) return _client;
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return null;
-  _client = new Anthropic({ apiKey: key });
-  return _client;
+export type LLMProvider = "groq" | "anthropic" | "none";
+
+const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || "claude-sonnet-4-6";
+
+export function currentProvider(): LLMProvider {
+  if (process.env.GROQ_API_KEY) return "groq";
+  if (process.env.ANTHROPIC_API_KEY) return "anthropic";
+  return "none";
 }
 
 export function isLLMAvailable(): boolean {
-  return !!process.env.ANTHROPIC_API_KEY;
+  return currentProvider() !== "none";
 }
+
+export function currentModel(): string | null {
+  switch (currentProvider()) {
+    case "groq":
+      return GROQ_MODEL;
+    case "anthropic":
+      return CLAUDE_MODEL;
+    default:
+      return null;
+  }
+}
+
+// Single entry point: chat with a system prompt + user prompt, return raw text.
+// Providers handle their own quirks; we just normalize to a string response.
+export interface ChatOptions {
+  system: string;
+  user: string;
+  maxTokens?: number;
+  temperature?: number;
+}
+
+export async function chat(opts: ChatOptions): Promise<string | null> {
+  const provider = currentProvider();
+  if (provider === "groq") return chatGroq(opts);
+  if (provider === "anthropic") return chatAnthropic(opts);
+  return null;
+}
+
+// Convenience: chat and parse the first {...} JSON block. Returns null on any
+// failure (missing key, network error, unparseable response). Callers should
+// treat null as "LLM unavailable" and fall back.
+export async function chatJSON<T = unknown>(opts: ChatOptions): Promise<{ data: T | null; error: string | null }> {
+  try {
+    const text = await chat(opts);
+    if (text === null) return { data: null, error: "no LLM provider configured" };
+    // Strip markdown fences and extract the first {...} block.
+    let cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+    if (!cleaned.startsWith("{")) {
+      const m = cleaned.match(/\{[\s\S]*\}/);
+      if (m) cleaned = m[0];
+    }
+    try {
+      return { data: JSON.parse(cleaned) as T, error: null };
+    } catch (e) {
+      return { data: null, error: `JSON parse failed: ${(e as Error).message}; head=${text.slice(0, 200)}` };
+    }
+  } catch (e) {
+    return { data: null, error: `LLM call failed: ${(e as Error).message}` };
+  }
+}
+
+// ---------- Groq (OpenAI-compatible) --------------------------------------
+
+async function chatGroq(opts: ChatOptions): Promise<string> {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) throw new Error("GROQ_API_KEY not set");
+  const body = {
+    model: GROQ_MODEL,
+    messages: [
+      { role: "system", content: opts.system },
+      { role: "user", content: opts.user },
+    ],
+    max_tokens: opts.maxTokens ?? 1024,
+    temperature: opts.temperature ?? 0.2,
+    // Ask Groq to emit JSON when possible; harmless for prose prompts.
+    response_format: { type: "json_object" as const },
+  };
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const errText = (await res.text().catch(() => "")).slice(0, 300);
+    throw new Error(`Groq ${res.status}: ${errText}`);
+  }
+  const data = (await res.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error("Groq: empty choice content");
+  return content;
+}
+
+// ---------- Anthropic ------------------------------------------------------
+
+let _anthropic: Anthropic | null = null;
+function anthropicClient(): Anthropic {
+  if (_anthropic) return _anthropic;
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) throw new Error("ANTHROPIC_API_KEY not set");
+  _anthropic = new Anthropic({ apiKey: key });
+  return _anthropic;
+}
+
+async function chatAnthropic(opts: ChatOptions): Promise<string> {
+  const c = anthropicClient();
+  const resp = await c.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: opts.maxTokens ?? 1024,
+    temperature: opts.temperature ?? 0.2,
+    system: opts.system,
+    messages: [{ role: "user", content: opts.user }],
+  });
+  return resp.content
+    .filter((b) => b.type === "text")
+    .map((b) => ("text" in b ? b.text : ""))
+    .join("");
+}
+
+// ---------- Match scoring --------------------------------------------------
 
 export interface LLMScore {
   score: number; // 0..1
@@ -94,32 +220,24 @@ ${JSON.stringify(jobSummary, null, 2)}
 Return JSON only.`;
 }
 
+// Name kept for API compatibility; now provider-agnostic.
 export async function scoreJobWithClaude(
   candidate: Candidate,
   job: Job,
 ): Promise<LLMScore | null> {
-  const client = getClient();
-  if (!client) return null;
-
+  if (!isLLMAvailable()) return null;
   try {
-    const response = await client.messages.create({
-      model: MODEL,
-      max_tokens: 400,
+    const { data, error } = await chatJSON<{ score: number; rationale: string }>({
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: buildUserPrompt(candidate, job) }],
+      user: buildUserPrompt(candidate, job),
+      maxTokens: 400,
     });
-
-    const text = response.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b as { type: "text"; text: string }).text)
-      .join("");
-
-    // Robust JSON extraction (in case model wraps in markdown fences).
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return null;
-    const parsed = JSON.parse(jsonMatch[0]) as { score: number; rationale: string };
-    const score = Math.max(0, Math.min(1, Number(parsed.score)));
-    const rationale = String(parsed.rationale || "");
+    if (!data) {
+      if (error) console.warn(`[llm] match score failed for ${job.id}: ${error}`);
+      return null;
+    }
+    const score = Math.max(0, Math.min(1, Number(data.score)));
+    const rationale = String(data.rationale || "");
     return { score, rationale };
   } catch (err) {
     console.warn(`[llm] scoreJobWithClaude failed for job ${job.id}:`, err instanceof Error ? err.message : err);
