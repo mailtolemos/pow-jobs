@@ -158,7 +158,9 @@ async function llmClassify(inc: IncomingJob): Promise<{ data: LLMClassification 
   if (!isLLMAvailable()) {
     return { data: null, error: "no LLM provider configured (set GROQ_API_KEY or ANTHROPIC_API_KEY)" };
   }
-  const descr = (inc.description_text || inc.description_html || "").slice(0, 8000);
+  // Keep each classification under ~1.5k tokens (~6k chars). Enough signal to
+  // pick domain/seniority/tech, without burning through Groq's free-tier TPM.
+  const descr = (inc.description_text || inc.description_html || "").slice(0, 3500);
   const user = `Employer: ${inc.employer}
 Title: ${inc.title}
 Department: ${inc.department ?? "—"}
@@ -169,7 +171,7 @@ Posted comp: ${inc.comp_min ?? "?"}–${inc.comp_max ?? "?"} ${inc.comp_currency
 
 Description:
 ${descr}`;
-  return chatJSON<LLMClassification>({ system: SYSTEM, user, maxTokens: 1536 });
+  return chatJSON<LLMClassification>({ system: SYSTEM, user, maxTokens: 768 });
 }
 
 // --- Public entrypoint ------------------------------------------------------

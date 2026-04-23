@@ -82,9 +82,25 @@ export async function chatJSON<T = unknown>(opts: ChatOptions): Promise<{ data: 
 
 // ---------- Groq (OpenAI-compatible) --------------------------------------
 
-async function chatGroq(opts: ChatOptions): Promise<string> {
-  const key = process.env.GROQ_API_KEY;
-  if (!key) throw new Error("GROQ_API_KEY not set");
+// Parse Groq's "Please try again in 4.21s" / "800ms" hint out of a 429 body.
+function parseRetryAfterMs(bodyText: string, header: string | null): number {
+  if (header) {
+    const n = Number(header);
+    if (!Number.isNaN(n) && n > 0) return Math.ceil(n * 1000);
+  }
+  const m = bodyText.match(/try again in\s+([\d.]+)\s*(ms|s)\b/i);
+  if (m) {
+    const v = Number(m[1]);
+    if (!Number.isNaN(v)) return m[2].toLowerCase() === "ms" ? Math.ceil(v) : Math.ceil(v * 1000);
+  }
+  return 0;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, Math.max(0, ms)));
+}
+
+async function groqRequest(key: string, opts: ChatOptions): Promise<Response> {
   const body = {
     model: GROQ_MODEL,
     messages: [
@@ -96,7 +112,7 @@ async function chatGroq(opts: ChatOptions): Promise<string> {
     // Ask Groq to emit JSON when possible; harmless for prose prompts.
     response_format: { type: "json_object" as const },
   };
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+  return fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -105,16 +121,37 @@ async function chatGroq(opts: ChatOptions): Promise<string> {
     body: JSON.stringify(body),
     cache: "no-store",
   });
-  if (!res.ok) {
-    const errText = (await res.text().catch(() => "")).slice(0, 300);
+}
+
+async function chatGroq(opts: ChatOptions): Promise<string> {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) throw new Error("GROQ_API_KEY not set");
+
+  // Up to 2 retries on 429 (rate limit). Groq returns a retry-after hint
+  // ("Please try again in 4.21s") we can parse. Total cap of ~35s wait
+  // across retries — enough for the free-tier TPM window to refill.
+  const MAX_RETRIES = 2;
+  const MAX_WAIT_MS = 35_000;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await groqRequest(key, opts);
+    if (res.ok) {
+      const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) throw new Error("Groq: empty choice content");
+      return content;
+    }
+    const errText = (await res.text().catch(() => "")).slice(0, 500);
+    const retryable = res.status === 429 || (res.status >= 500 && res.status < 600);
+    if (retryable && attempt < MAX_RETRIES) {
+      const hinted = parseRetryAfterMs(errText, res.headers.get("retry-after"));
+      // Add a small jitter so concurrent classifiers don't all unblock in lockstep.
+      const wait = Math.min(MAX_WAIT_MS, Math.max(500, hinted + 250 + Math.floor(Math.random() * 250)));
+      await sleep(wait);
+      continue;
+    }
     throw new Error(`Groq ${res.status}: ${errText}`);
   }
-  const data = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error("Groq: empty choice content");
-  return content;
+  throw new Error("Groq: exhausted retries");
 }
 
 // ---------- Anthropic ------------------------------------------------------
