@@ -146,4 +146,22 @@ CREATE TABLE IF NOT EXISTS sent_alerts (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_sent_alerts_uniq
   ON sent_alerts(candidate_id, job_id, channel);
+
+-- Sources: job boards / RSS feeds / career pages that feed the ingest pipeline.
+-- Admin-managed via /admin. Jobs carry their own source_url + source_channel
+-- today; future scrapers will key off this catalogue.
+CREATE TABLE IF NOT EXISTS sources (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  url TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'manual',
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  notes TEXT NOT NULL DEFAULT '',
+  last_checked_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_sources_active ON sources(active);
+CREATE INDEX IF NOT EXISTS idx_sources_kind ON sources(kind);
 `;

@@ -8,7 +8,9 @@ export default async function FeedPage() {
   const user = await getSessionUser();
   const myCandidate = user ? await getCandidateByUserId(user.id) : null;
   const myExtras = myCandidate ? await getCandidateExtras(myCandidate.id) : null;
-  const demo = await listCandidates({ demoOnly: true });
+  // Only surface demo personas to signed-out visitors. Signed-in users should
+  // only ever see their own feed.
+  const demo = user ? [] : await listCandidates({ demoOnly: true });
 
   return (
     <FeedClient

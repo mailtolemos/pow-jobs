@@ -24,7 +24,9 @@ interface Props {
 }
 
 export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPersonas }: Props) {
-  const defaultMode: Mode = myCandidate ? "me" : "demo";
+  // Signed-in users always view their own feed. Signed-out visitors default to
+  // the first demo persona.
+  const defaultMode: Mode = signedInAs ? "me" : "demo";
   const [mode, setMode] = useState<Mode>(defaultMode);
   const [activeDemoId, setActiveDemoId] = useState<string>(demoPersonas[0]?.id ?? "");
   const [data, setData] = useState<MatchResponse | null>(null);
@@ -90,42 +92,34 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
       )}
 
       <div className="flex flex-col md:flex-row md:items-center gap-3 mb-6">
-        <div className="flex gap-2 flex-wrap">
-          {myCandidate && (
-            <button
-              onClick={() => setMode("me")}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition border ${
-                mode === "me"
-                  ? "bg-accent text-white border-accent"
-                  : "bg-white text-ink border-neutral-300 hover:border-neutral-400"
-              }`}
-            >
-              My profile
-            </button>
-          )}
-          {demoPersonas.map((c) => {
-            const selected = mode === "demo" && c.id === activeDemoId;
-            return (
-              <button
-                key={c.id}
-                onClick={() => {
-                  setMode("demo");
-                  setActiveDemoId(c.id);
-                }}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition border ${
-                  selected
-                    ? "bg-accent text-white border-accent"
-                    : "bg-white text-ink border-neutral-300 hover:border-neutral-400"
-                }`}
-              >
-                {c.display_name}
-                <span className="ml-1.5 text-[10px] uppercase tracking-wider opacity-75">
-                  {c.identity_mode}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        {/* Persona switcher only appears when not signed in. Signed-in users
+            see their own feed exclusively. */}
+        {!signedInAs && demoPersonas.length > 0 && (
+          <div className="flex gap-2 flex-wrap">
+            {demoPersonas.map((c) => {
+              const selected = mode === "demo" && c.id === activeDemoId;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => {
+                    setMode("demo");
+                    setActiveDemoId(c.id);
+                  }}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition border ${
+                    selected
+                      ? "bg-accent text-white border-accent"
+                      : "bg-white text-ink border-neutral-300 hover:border-neutral-400"
+                  }`}
+                >
+                  {c.display_name}
+                  <span className="ml-1.5 text-[10px] uppercase tracking-wider opacity-75">
+                    {c.identity_mode}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div className="md:ml-auto flex items-center gap-4 text-sm">
           <label className="flex items-center gap-1.5 text-neutral-600">
             <input type="checkbox" checked={useLLM} onChange={(e) => setUseLLM(e.target.checked)} />

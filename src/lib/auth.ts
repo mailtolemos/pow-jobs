@@ -3,7 +3,12 @@
 
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
-import { getUserById, getCandidateByUserId, type UserRow } from "./db";
+import {
+  getUserById,
+  getCandidateByUserId,
+  promoteToAdminIfAllowlisted,
+  type UserRow,
+} from "./db";
 
 const COOKIE_NAME = "pow_session";
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
@@ -51,8 +56,12 @@ export async function getSessionUser(): Promise<
   if (!cookie?.value) return null;
   const payload = await verifySessionToken(cookie.value);
   if (!payload) return null;
-  const user = await getUserById(payload.uid);
-  if (!user) return null;
+  const rawUser = await getUserById(payload.uid);
+  if (!rawUser) return null;
+  // If this user's email is now in the admin allow-list (e.g. first request
+  // after a deploy that adds them), promote them so they get /admin access
+  // without having to sign out and back in.
+  const user = await promoteToAdminIfAllowlisted(rawUser);
   const candidate = await getCandidateByUserId(user.id);
   return { ...user, candidate_id: candidate?.id ?? null };
 }

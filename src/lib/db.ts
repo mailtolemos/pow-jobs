@@ -424,25 +424,59 @@ export async function getUserById(id: string): Promise<UserRow | null> {
   return rows[0] ? rowToUser(rows[0]) : null;
 }
 
+// Emails in ADMIN_EMAILS (comma-separated) are automatically promoted to
+// is_admin=true on sign-in. Falls back to mailtolemos@gmail.com as the
+// hard-coded owner if ADMIN_EMAILS is unset, so the owner can always reach
+// /admin even on a fresh deploy with no env var configured.
+function adminEmails(): Set<string> {
+  const raw = process.env.ADMIN_EMAILS || "mailtolemos@gmail.com";
+  return new Set(
+    raw
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
+export function isAdminEmail(email: string): boolean {
+  return adminEmails().has(email.trim().toLowerCase());
+}
+
+// Promote an existing user to admin if their email is in the allow-list.
+// Idempotent no-op if already admin or email not in allow-list. Used by
+// getSessionUser() so the owner gets access without re-signing in after a
+// deploy that ships the allow-list.
+export async function promoteToAdminIfAllowlisted(user: UserRow): Promise<UserRow> {
+  if (user.is_admin) return user;
+  if (!isAdminEmail(user.email)) return user;
+  await sql()`UPDATE users SET is_admin = TRUE WHERE id = ${user.id}`;
+  return { ...user, is_admin: true };
+}
+
 export async function upsertUserByEmail(email: string): Promise<UserRow> {
   await ensureSchema();
-  const existing = await getUserByEmail(email);
+  const normalized = email.trim().toLowerCase();
+  const shouldBeAdmin = isAdminEmail(normalized);
+  const existing = await getUserByEmail(normalized);
   if (existing) {
+    if (shouldBeAdmin && !existing.is_admin) {
+      await sql()`UPDATE users SET is_admin = TRUE, last_login_at = NOW() WHERE id = ${existing.id}`;
+      return { ...existing, is_admin: true, last_login_at: new Date().toISOString() };
+    }
     await sql()`UPDATE users SET last_login_at = NOW() WHERE id = ${existing.id}`;
     return { ...existing, last_login_at: new Date().toISOString() };
   }
   const id = newId("user");
-  const normalized = email.trim().toLowerCase();
   await sql()`
-    INSERT INTO users (id, email, last_login_at)
-    VALUES (${id}, ${normalized}, NOW())
+    INSERT INTO users (id, email, last_login_at, is_admin)
+    VALUES (${id}, ${normalized}, NOW(), ${shouldBeAdmin})
   `;
   return {
     id,
     email: normalized,
     created_at: new Date().toISOString(),
     last_login_at: new Date().toISOString(),
-    is_admin: false,
+    is_admin: shouldBeAdmin,
   };
 }
 
@@ -620,4 +654,119 @@ export async function findCandidateByTelegramToken(token: string): Promise<Candi
     SELECT * FROM candidates WHERE telegram_link_token = ${token}
   `) as Row[];
   return rows[0] ? rowToCandidate(rows[0]) : null;
+}
+
+// --- Admin: sources ------------------------------------------------------
+
+export type SourceKind = "rss" | "career-page" | "api" | "manual" | "aggregator";
+
+export interface SourceRow {
+  id: string;
+  name: string;
+  url: string;
+  kind: SourceKind;
+  active: boolean;
+  notes: string;
+  last_checked_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+function rowToSource(row: Row): SourceRow {
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    url: row.url as string,
+    kind: (row.kind as SourceKind) ?? "manual",
+    active: Boolean(row.active),
+    notes: (row.notes as string) ?? "",
+    last_checked_at: row.last_checked_at ? toISO(row.last_checked_at) : null,
+    created_at: toISO(row.created_at),
+    updated_at: toISO(row.updated_at),
+  };
+}
+
+export async function listSources(): Promise<SourceRow[]> {
+  await ensureSchema();
+  const rows = (await sql()`
+    SELECT * FROM sources ORDER BY active DESC, name ASC
+  `) as Row[];
+  return rows.map(rowToSource);
+}
+
+export async function getSource(id: string): Promise<SourceRow | null> {
+  await ensureSchema();
+  const rows = (await sql()`SELECT * FROM sources WHERE id = ${id}`) as Row[];
+  return rows[0] ? rowToSource(rows[0]) : null;
+}
+
+export async function createSource(input: {
+  name: string;
+  url: string;
+  kind: SourceKind;
+  active?: boolean;
+  notes?: string;
+}): Promise<SourceRow> {
+  await ensureSchema();
+  const id = newId("src");
+  await sql()`
+    INSERT INTO sources (id, name, url, kind, active, notes)
+    VALUES (
+      ${id},
+      ${input.name},
+      ${input.url},
+      ${input.kind},
+      ${input.active ?? true},
+      ${input.notes ?? ""}
+    )
+  `;
+  const row = await getSource(id);
+  if (!row) throw new Error("source insert failed");
+  return row;
+}
+
+export async function updateSource(
+  id: string,
+  patch: Partial<{ name: string; url: string; kind: SourceKind; active: boolean; notes: string }>,
+): Promise<SourceRow | null> {
+  await ensureSchema();
+  const existing = await getSource(id);
+  if (!existing) return null;
+  const next = {
+    name: patch.name ?? existing.name,
+    url: patch.url ?? existing.url,
+    kind: patch.kind ?? existing.kind,
+    active: patch.active ?? existing.active,
+    notes: patch.notes ?? existing.notes,
+  };
+  await sql()`
+    UPDATE sources SET
+      name = ${next.name},
+      url = ${next.url},
+      kind = ${next.kind},
+      active = ${next.active},
+      notes = ${next.notes},
+      updated_at = NOW()
+    WHERE id = ${id}
+  `;
+  return await getSource(id);
+}
+
+export async function deleteSource(id: string): Promise<boolean> {
+  await ensureSchema();
+  await sql()`DELETE FROM sources WHERE id = ${id}`;
+  return true;
+}
+
+export async function markSourceChecked(id: string): Promise<void> {
+  await ensureSchema();
+  await sql()`UPDATE sources SET last_checked_at = NOW(), updated_at = NOW() WHERE id = ${id}`;
+}
+
+// --- Admin: is_admin toggle ---------------------------------------------
+
+export async function setUserIsAdmin(email: string, isAdmin: boolean): Promise<void> {
+  await ensureSchema();
+  const normalized = email.trim().toLowerCase();
+  await sql()`UPDATE users SET is_admin = ${isAdmin} WHERE lower(email) = ${normalized}`;
 }
