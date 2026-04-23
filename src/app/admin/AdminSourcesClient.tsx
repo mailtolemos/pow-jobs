@@ -9,10 +9,21 @@ interface Props {
   initial: SourceRow[];
 }
 
+interface FetchReport {
+  source_id: string;
+  fetched: number;
+  created: number;
+  updated: number;
+  errors: string[];
+  duration_ms: number;
+}
+
 export function AdminSourcesClient({ initial }: Props) {
   const [sources, setSources] = useState<SourceRow[]>(initial);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [fetchingId, setFetchingId] = useState<string | null>(null);
+  const [lastReport, setLastReport] = useState<FetchReport | null>(null);
 
   // Add form state
   const [name, setName] = useState("");
@@ -74,6 +85,23 @@ export function AdminSourcesClient({ initial }: Props) {
     }
   }
 
+  async function handleFetch(id: string) {
+    setFetchingId(id);
+    setErr(null);
+    setLastReport(null);
+    try {
+      const res = await fetch(`/api/admin/sources/${id}/fetch`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setLastReport(data.result as FetchReport);
+      await refresh();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setFetchingId(null);
+    }
+  }
+
   async function handleDelete(id: string, label: string) {
     if (!confirm(`Delete source "${label}"? This cannot be undone.`)) return;
     setBusy(true);
@@ -97,6 +125,24 @@ export function AdminSourcesClient({ initial }: Props) {
       {err && (
         <div className="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm text-rose-900">
           {err}
+        </div>
+      )}
+
+      {lastReport && (
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-900">
+          <div className="font-semibold">
+            Fetched {lastReport.fetched} roles · {lastReport.created} new · {lastReport.updated} updated · {(lastReport.duration_ms / 1000).toFixed(1)}s
+          </div>
+          {lastReport.errors.length > 0 && (
+            <details className="mt-1 text-xs">
+              <summary>{lastReport.errors.length} error(s)</summary>
+              <ul className="mt-1 list-disc pl-5">
+                {lastReport.errors.slice(0, 20).map((e, i) => (
+                  <li key={i}>{e}</li>
+                ))}
+              </ul>
+            </details>
+          )}
         </div>
       )}
 
@@ -177,8 +223,10 @@ export function AdminSourcesClient({ initial }: Props) {
                 key={s.id}
                 source={s}
                 busy={busy}
+                fetching={fetchingId === s.id}
                 onPatch={handlePatch}
                 onDelete={handleDelete}
+                onFetch={handleFetch}
               />
             ))}
           </div>
@@ -191,13 +239,17 @@ export function AdminSourcesClient({ initial }: Props) {
 function SourceRowEditor({
   source,
   busy,
+  fetching,
   onPatch,
   onDelete,
+  onFetch,
 }: {
   source: SourceRow;
   busy: boolean;
+  fetching: boolean;
   onPatch: (id: string, patch: Partial<SourceRow>) => Promise<void>;
   onDelete: (id: string, label: string) => Promise<void>;
+  onFetch: (id: string) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(source.name);
@@ -299,22 +351,29 @@ function SourceRowEditor({
           </div>
           <div className="flex flex-col gap-1.5 shrink-0">
             <button
+              onClick={() => onFetch(source.id)}
+              disabled={busy || fetching}
+              className="rounded-lg bg-accent text-white px-2.5 py-1 text-xs font-semibold disabled:opacity-50"
+            >
+              {fetching ? "Fetching…" : "Fetch now"}
+            </button>
+            <button
               onClick={() => setEditing(true)}
-              disabled={busy}
+              disabled={busy || fetching}
               className="rounded-lg border border-neutral-300 px-2.5 py-1 text-xs font-medium disabled:opacity-50"
             >
               Edit
             </button>
             <button
               onClick={() => onPatch(source.id, { active: !source.active })}
-              disabled={busy}
+              disabled={busy || fetching}
               className="rounded-lg border border-neutral-300 px-2.5 py-1 text-xs font-medium disabled:opacity-50"
             >
               {source.active ? "Pause" : "Resume"}
             </button>
             <button
               onClick={() => onDelete(source.id, source.name)}
-              disabled={busy}
+              disabled={busy || fetching}
               className="rounded-lg border border-rose-300 text-rose-700 px-2.5 py-1 text-xs font-medium disabled:opacity-50"
             >
               Delete

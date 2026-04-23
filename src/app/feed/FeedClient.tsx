@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Candidate, Job, MatchScore } from "@/lib/types";
 import { JobCard } from "@/components/JobCard";
+import {
+  FeedFilters,
+  DEFAULT_FILTERS,
+  applyFilters,
+  type FeedFilterState,
+} from "./FeedFilters";
 
 interface MatchResponse {
   threshold: number;
@@ -33,6 +39,12 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
   const [loading, setLoading] = useState(false);
   const [useLLM, setUseLLM] = useState(true);
   const [applyFloor, setApplyFloor] = useState(true);
+  const [filters, setFilters] = useState<FeedFilterState>(() => ({
+    ...DEFAULT_FILTERS,
+    domains: new Set<string>(),
+    remotePolicies: new Set<string>(),
+    jurisdictions: new Set<string>(),
+  }));
 
   const viewingCandidate: Candidate | null =
     mode === "me"
@@ -160,44 +172,92 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
 
       {data && (
         <>
-          <div className="flex items-center gap-4 text-sm text-neutral-600 mb-4 flex-wrap">
-            <span>
-              <strong className="text-ink">{data.totalKept}</strong> shown / {data.totalScored} scored
-            </span>
-            <span>·</span>
-            <span>{data.totalHardFiltered} hard-filtered</span>
-            <span>·</span>
-            <span>Precision floor: {Math.round(data.threshold * 100)}%</span>
-            <span>·</span>
-            <span>LLM: {data.llmAvailable ? "Claude" : "heuristic fallback"}</span>
-          </div>
-
-          {data.matches.length === 0 && (
-            <div className="bg-white border border-neutral-200 rounded-xl p-8 text-center">
-              <div className="text-lg font-semibold text-ink mb-2">Silence is the answer.</div>
-              <div className="text-neutral-600 text-sm max-w-md mx-auto">
-                Nothing crossed your precision floor this round. Turn off the floor above to see the full ranked list,
-                or adjust preferences on your profile.
-              </div>
-              {mode === "me" && (
-                <Link
-                  href="/profile"
-                  className="inline-block mt-4 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-ink hover:border-neutral-400"
-                >
-                  Tune profile
-                </Link>
-              )}
-            </div>
-          )}
-
-          <div className="grid gap-4">
-            {data.matches.map(({ match, job }) => (
-              <JobCard key={job.id} job={job} match={match} />
-            ))}
-          </div>
+          <FeedDataSummary data={data} />
+          <FeedFiltersWrapper data={data} filters={filters} setFilters={setFilters} mode={mode} />
         </>
       )}
     </div>
+  );
+}
+
+function FeedDataSummary({ data }: { data: MatchResponse }) {
+  return (
+    <div className="flex items-center gap-4 text-sm text-neutral-600 mb-4 flex-wrap">
+      <span>
+        <strong className="text-ink">{data.totalKept}</strong> shown / {data.totalScored} scored
+      </span>
+      <span>·</span>
+      <span>{data.totalHardFiltered} hard-filtered</span>
+      <span>·</span>
+      <span>Precision floor: {Math.round(data.threshold * 100)}%</span>
+      <span>·</span>
+      <span>LLM: {data.llmAvailable ? "Claude" : "heuristic fallback"}</span>
+    </div>
+  );
+}
+
+function FeedFiltersWrapper({
+  data,
+  filters,
+  setFilters,
+  mode,
+}: {
+  data: MatchResponse;
+  filters: FeedFilterState;
+  setFilters: (f: FeedFilterState) => void;
+  mode: Mode;
+}) {
+  const availableDomains = useMemo(() => {
+    const set = new Set<string>();
+    for (const { job } of data.matches) set.add(job.domain);
+    return [...set].sort();
+  }, [data]);
+
+  const visibleMatches = useMemo(
+    () => data.matches.filter(({ job }) => applyFilters(job, filters)),
+    [data, filters],
+  );
+
+  return (
+    <>
+      <FeedFilters
+        filters={filters}
+        setFilters={setFilters}
+        availableDomains={availableDomains}
+        matchingCount={visibleMatches.length}
+        totalCount={data.matches.length}
+      />
+
+      {data.matches.length === 0 && (
+        <div className="bg-white border border-neutral-200 rounded-xl p-8 text-center">
+          <div className="text-lg font-semibold text-ink mb-2">Silence is the answer.</div>
+          <div className="text-neutral-600 text-sm max-w-md mx-auto">
+            Nothing crossed your precision floor this round. Turn off the floor above to see the full ranked list,
+            or adjust preferences on your profile.
+          </div>
+          {mode === "me" && (
+            <Link
+              href="/profile"
+              className="inline-block mt-4 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-ink hover:border-neutral-400"
+            >
+              Tune profile
+            </Link>
+          )}
+        </div>
+      )}
+
+      {data.matches.length > 0 && visibleMatches.length === 0 && (
+        <div className="bg-white border border-neutral-200 rounded-xl p-6 text-center text-sm text-neutral-600">
+          No matches pass your filters. Try loosening them.
+        </div>
+      )}
+
+      <div className="grid gap-4">
+        {visibleMatches.map(({ match, job }) => (
+          <JobCard key={job.id} job={job} match={match} />
+        ))}
+      </div>
+    </>
   );
 }
 

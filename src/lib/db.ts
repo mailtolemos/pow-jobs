@@ -770,3 +770,62 @@ export async function setUserIsAdmin(email: string, isAdmin: boolean): Promise<v
   const normalized = email.trim().toLowerCase();
   await sql()`UPDATE users SET is_admin = ${isAdmin} WHERE lower(email) = ${normalized}`;
 }
+
+// --- Admin: jobs maintenance --------------------------------------------
+
+export async function deleteJob(id: string): Promise<void> {
+  await ensureSchema();
+  await sql()`DELETE FROM jobs WHERE id = ${id}`;
+}
+
+export async function deleteJobs(ids: string[]): Promise<number> {
+  if (ids.length === 0) return 0;
+  await ensureSchema();
+  const rows = (await sql()`DELETE FROM jobs WHERE id = ANY(${ids}::text[]) RETURNING id`) as Row[];
+  return rows.length;
+}
+
+// --- Admin: users maintenance -------------------------------------------
+
+export interface AdminUserRow extends UserRow {
+  candidate_id: string | null;
+  candidate_display_name: string | null;
+  candidate_headline: string | null;
+}
+
+export async function listUsersAdmin(): Promise<AdminUserRow[]> {
+  await ensureSchema();
+  const rows = (await sql()`
+    SELECT
+      u.id, u.email, u.created_at, u.last_login_at, u.is_admin,
+      c.id AS candidate_id,
+      c.display_name AS candidate_display_name,
+      c.headline AS candidate_headline
+    FROM users u
+    LEFT JOIN candidates c ON c.user_id = u.id
+    ORDER BY u.created_at DESC
+  `) as Row[];
+  return rows.map((row) => ({
+    id: row.id as string,
+    email: row.email as string,
+    created_at: toISO(row.created_at),
+    last_login_at: row.last_login_at ? toISO(row.last_login_at) : null,
+    is_admin: Boolean(row.is_admin),
+    candidate_id: (row.candidate_id as string | null) ?? null,
+    candidate_display_name: (row.candidate_display_name as string | null) ?? null,
+    candidate_headline: (row.candidate_headline as string | null) ?? null,
+  }));
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  await ensureSchema();
+  // Candidate + matches + interactions + sent_alerts cascade via FK.
+  await sql()`DELETE FROM users WHERE id = ${id}`;
+}
+
+export async function deleteUsers(ids: string[]): Promise<number> {
+  if (ids.length === 0) return 0;
+  await ensureSchema();
+  const rows = (await sql()`DELETE FROM users WHERE id = ANY(${ids}::text[]) RETURNING id`) as Row[];
+  return rows.length;
+}
