@@ -134,7 +134,7 @@ export async function dispatchAlertsForCandidate(
         : `<b>${tgFresh.length} new roles</b> worth your time:\n\n`;
     const separator = "\n\n— — — — —\n\n";
     const body = tgFresh.map(({ match, job }) => formatJobForTelegram(job, match)).join(separator);
-    const footer = `\n\n<i>Sent by PoW Jobs · <a href="${getAppUrl()}/profile">manage alerts</a></i>`;
+    const footer = `\n\n<i>Sent by Pablo Jobs · <a href="${getAppUrl()}/profile">manage alerts</a></i>`;
     const tg = await sendTelegramMessage(candidate.telegram_chat_id, header + body + footer, {
       parseMode: "HTML",
       disablePreview: true,

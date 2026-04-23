@@ -27,7 +27,7 @@ export default async function ProfilePage() {
     <div className="max-w-4xl mx-auto px-6 py-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-ink">Your profile</h1>
-        <p className="text-neutral-600 mt-1 text-sm">
+        <p className="text-muted mt-1 text-sm">
           This is what the matching engine reads to decide what lands in your feed and inbox.
           Be specific — the more you tell it, the quieter and sharper the signal.
         </p>

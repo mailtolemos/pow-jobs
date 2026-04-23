@@ -11,7 +11,7 @@ export default async function AdminUsersPage() {
     <div className="max-w-6xl mx-auto px-6 py-10">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-ink">Users</h1>
-        <p className="text-neutral-600 mt-1 text-sm">
+        <p className="text-muted mt-1 text-sm">
           Everyone who has signed in. Deleting cascades to their candidate profile,
           matches, interactions, and alert history.
         </p>

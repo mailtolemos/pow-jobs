@@ -23,7 +23,7 @@ export function AdminNav() {
             className={`px-2.5 py-1 rounded-md text-sm font-medium transition ${
               active
                 ? "bg-ink text-white"
-                : "text-neutral-700 hover:bg-neutral-100"
+                : "text-ink/90 hover:bg-line/40"
             }`}
           >
             {t.label}

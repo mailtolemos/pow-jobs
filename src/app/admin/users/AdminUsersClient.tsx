@@ -118,17 +118,17 @@ export function AdminUsersClient({ initial, meId }: Props) {
         </div>
       )}
 
-      <div className="bg-white border border-neutral-200 rounded-xl p-4 grid grid-cols-1 md:grid-cols-5 gap-3">
+      <div className="bg-surface border border-line rounded-xl p-4 grid grid-cols-1 md:grid-cols-5 gap-3">
         <input
           placeholder="Search email / display name / headline…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="md:col-span-2 border border-neutral-300 rounded-lg px-3 py-2 text-sm"
+          className="md:col-span-2 border border-line rounded-lg px-3 py-2 text-sm"
         />
         <select
           value={role}
           onChange={(e) => setRole(e.target.value as RoleFilter)}
-          className="border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white"
+          className="border border-line rounded-lg px-3 py-2 text-sm bg-surface"
         >
           <option value="all">All roles</option>
           <option value="admin">Admins only</option>
@@ -137,14 +137,14 @@ export function AdminUsersClient({ initial, meId }: Props) {
         <select
           value={profile}
           onChange={(e) => setProfile(e.target.value as ProfileFilter)}
-          className="border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white"
+          className="border border-line rounded-lg px-3 py-2 text-sm bg-surface"
         >
           <option value="all">All profiles</option>
           <option value="with_candidate">Has candidate profile</option>
           <option value="no_candidate">No profile yet</option>
         </select>
         <div className="md:col-span-5 flex items-center gap-3 flex-wrap">
-          <span className="text-xs text-neutral-500">
+          <span className="text-xs text-muted">
             Showing {filtered.length} / {users.length}
           </span>
           <button
@@ -157,9 +157,9 @@ export function AdminUsersClient({ initial, meId }: Props) {
         </div>
       </div>
 
-      <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden">
+      <div className="bg-surface border border-line rounded-xl overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-neutral-600">
+          <thead className="bg-paper text-muted">
             <tr>
               <th className="px-3 py-2 text-left w-8">
                 <input
@@ -178,7 +178,7 @@ export function AdminUsersClient({ initial, meId }: Props) {
           </thead>
           <tbody>
             {filtered.map((u) => (
-              <tr key={u.id} className="border-t border-neutral-100">
+              <tr key={u.id} className="border-t border-line/60">
                 <td className="px-3 py-2">
                   <input
                     type="checkbox"
@@ -194,9 +194,9 @@ export function AdminUsersClient({ initial, meId }: Props) {
                   )}
                 </td>
                 <td className="px-3 py-2">
-                  {u.candidate_display_name || <span className="text-neutral-400">—</span>}
+                  {u.candidate_display_name || <span className="text-muted/70">—</span>}
                   {u.candidate_headline && (
-                    <div className="text-[11px] text-neutral-500 truncate max-w-xs">
+                    <div className="text-[11px] text-muted truncate max-w-xs">
                       {u.candidate_headline}
                     </div>
                   )}
@@ -205,13 +205,13 @@ export function AdminUsersClient({ initial, meId }: Props) {
                   {u.is_admin ? (
                     <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">admin</span>
                   ) : (
-                    <span className="text-neutral-500">user</span>
+                    <span className="text-muted">user</span>
                   )}
                 </td>
-                <td className="px-3 py-2 text-xs text-neutral-600">
+                <td className="px-3 py-2 text-xs text-muted">
                   {new Date(u.created_at).toLocaleDateString()}
                 </td>
-                <td className="px-3 py-2 text-xs text-neutral-600">
+                <td className="px-3 py-2 text-xs text-muted">
                   {u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : "—"}
                 </td>
                 <td className="px-3 py-2 text-right">
@@ -227,7 +227,7 @@ export function AdminUsersClient({ initial, meId }: Props) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-3 py-10 text-center text-neutral-500 text-sm">
+                <td colSpan={7} className="px-3 py-10 text-center text-muted text-sm">
                   No users match these filters.
                 </td>
               </tr>

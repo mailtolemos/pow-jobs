@@ -72,7 +72,7 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
     <div className="max-w-5xl mx-auto px-6 py-10">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-ink">Your feed</h1>
-        <p className="text-neutral-600 mt-1 text-sm">
+        <p className="text-muted mt-1 text-sm">
           {mode === "me"
             ? "Live matching against the profile you saved. Tune it anytime from your profile page."
             : "Live matching against a demo persona — sign in to see matches for your real profile."}
@@ -92,8 +92,8 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
       )}
 
       {!signedInAs && (
-        <div className="mb-5 rounded-xl bg-white border border-neutral-200 px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-2">
-          <span className="text-neutral-700">
+        <div className="mb-5 rounded-xl bg-surface border border-line px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-2">
+          <span className="text-ink/90">
             You&rsquo;re browsing as a demo persona. Sign in to build your own profile and get personalized alerts.
           </span>
           <Link
@@ -122,7 +122,7 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition border ${
                     selected
                       ? "bg-accent text-white border-accent"
-                      : "bg-white text-ink border-neutral-300 hover:border-neutral-400"
+                      : "bg-surface text-ink border-line hover:border-line"
                   }`}
                 >
                   {c.display_name}
@@ -135,11 +135,11 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
           </div>
         )}
         <div className="md:ml-auto flex items-center gap-4 text-sm">
-          <label className="flex items-center gap-1.5 text-neutral-600">
+          <label className="flex items-center gap-1.5 text-muted">
             <input type="checkbox" checked={useLLM} onChange={(e) => setUseLLM(e.target.checked)} />
             LLM judge
           </label>
-          <label className="flex items-center gap-1.5 text-neutral-600">
+          <label className="flex items-center gap-1.5 text-muted">
             <input
               type="checkbox"
               checked={applyFloor}
@@ -151,8 +151,8 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
       </div>
 
       {viewingCandidate && (
-        <div className="mb-6 bg-white border border-neutral-200 rounded-xl p-5">
-          <div className="text-sm text-neutral-600">
+        <div className="mb-6 bg-surface border border-line rounded-xl p-5">
+          <div className="text-sm text-muted">
             {viewingCandidate.headline || (mode === "me" ? "(No headline yet)" : "")}
           </div>
           <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
@@ -170,7 +170,7 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
         </div>
       )}
 
-      {loading && <div className="text-neutral-500">Scoring all open roles…</div>}
+      {loading && <div className="text-muted">Scoring all open roles…</div>}
 
       {data && (
         <>
@@ -184,7 +184,7 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
 
 function FeedDataSummary({ data }: { data: MatchResponse }) {
   return (
-    <div className="flex items-center gap-4 text-sm text-neutral-600 mb-4 flex-wrap">
+    <div className="flex items-center gap-4 text-sm text-muted mb-4 flex-wrap">
       <span>
         <strong className="text-ink">{data.totalKept}</strong> shown / {data.totalScored} scored
       </span>
@@ -236,16 +236,16 @@ function FeedFiltersWrapper({
       />
 
       {data.matches.length === 0 && (
-        <div className="bg-white border border-neutral-200 rounded-xl p-8 text-center">
+        <div className="bg-surface border border-line rounded-xl p-8 text-center">
           <div className="text-lg font-semibold text-ink mb-2">Silence is the answer.</div>
-          <div className="text-neutral-600 text-sm max-w-md mx-auto">
+          <div className="text-muted text-sm max-w-md mx-auto">
             Nothing crossed your precision floor this round. Turn off the floor above to see the full ranked list,
             or adjust preferences on your profile.
           </div>
           {mode === "me" && (
             <Link
               href="/profile"
-              className="inline-block mt-4 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-ink hover:border-neutral-400"
+              className="inline-block mt-4 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink hover:border-line"
             >
               Tune profile
             </Link>
@@ -254,7 +254,7 @@ function FeedFiltersWrapper({
       )}
 
       {data.matches.length > 0 && visibleMatches.length === 0 && (
-        <div className="bg-white border border-neutral-200 rounded-xl p-6 text-center text-sm text-neutral-600">
+        <div className="bg-surface border border-line rounded-xl p-6 text-center text-sm text-muted">
           No matches pass your filters. Try loosening them.
         </div>
       )}
@@ -271,7 +271,7 @@ function FeedFiltersWrapper({
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-widest text-neutral-500">{label}</div>
+      <div className="text-[10px] uppercase tracking-widest text-muted">{label}</div>
       <div className="text-ink font-medium mt-0.5">{value}</div>
     </div>
   );

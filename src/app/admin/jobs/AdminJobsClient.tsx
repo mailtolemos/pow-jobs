@@ -132,17 +132,17 @@ export function AdminJobsClient({ initial }: Props) {
         </div>
       )}
 
-      <div className="bg-white border border-neutral-200 rounded-xl p-4 grid grid-cols-1 md:grid-cols-5 gap-3">
+      <div className="bg-surface border border-line rounded-xl p-4 grid grid-cols-1 md:grid-cols-5 gap-3">
         <input
           placeholder="Search title / employer / description…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="md:col-span-2 border border-neutral-300 rounded-lg px-3 py-2 text-sm"
+          className="md:col-span-2 border border-line rounded-lg px-3 py-2 text-sm"
         />
         <select
           value={employerFilter}
           onChange={(e) => setEmployerFilter(e.target.value)}
-          className="border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white"
+          className="border border-line rounded-lg px-3 py-2 text-sm bg-surface"
         >
           <option value="">All employers</option>
           {distinct.employers.map((e) => (
@@ -154,7 +154,7 @@ export function AdminJobsClient({ initial }: Props) {
         <select
           value={domainFilter}
           onChange={(e) => setDomainFilter(e.target.value)}
-          className="border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white"
+          className="border border-line rounded-lg px-3 py-2 text-sm bg-surface"
         >
           <option value="">All domains</option>
           {distinct.domains.map((d) => (
@@ -166,7 +166,7 @@ export function AdminJobsClient({ initial }: Props) {
         <select
           value={sourceFilter}
           onChange={(e) => setSourceFilter(e.target.value)}
-          className="border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white"
+          className="border border-line rounded-lg px-3 py-2 text-sm bg-surface"
         >
           <option value="">All sources</option>
           {distinct.sources.map((s) => (
@@ -182,20 +182,20 @@ export function AdminJobsClient({ initial }: Props) {
                 key={s}
                 onClick={() => setStatus(s)}
                 className={`px-2.5 py-1 rounded-md text-xs font-medium border ${
-                  status === s ? "bg-ink text-white border-ink" : "bg-white border-neutral-300"
+                  status === s ? "bg-ink text-white border-ink" : "bg-surface border-line"
                 }`}
               >
                 {s}
               </button>
             ))}
           </div>
-          <span className="text-xs text-neutral-500">
+          <span className="text-xs text-muted">
             Showing {filtered.length} / {jobs.length}
           </span>
           <div className="ml-auto flex gap-2">
             <button
               onClick={() => setShowAdd((v) => !v)}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium"
+              className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium"
             >
               {showAdd ? "Close add form" : "Add job manually"}
             </button>
@@ -212,9 +212,9 @@ export function AdminJobsClient({ initial }: Props) {
 
       {showAdd && <AddJobForm onCreated={refresh} />}
 
-      <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden">
+      <div className="bg-surface border border-line rounded-xl overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-neutral-600">
+          <thead className="bg-paper text-muted">
             <tr>
               <th className="px-3 py-2 text-left w-8">
                 <input
@@ -234,7 +234,7 @@ export function AdminJobsClient({ initial }: Props) {
           </thead>
           <tbody>
             {filtered.map((j) => (
-              <tr key={j.id} className="border-t border-neutral-100">
+              <tr key={j.id} className="border-t border-line/60">
                 <td className="px-3 py-2">
                   <input
                     type="checkbox"
@@ -251,11 +251,11 @@ export function AdminJobsClient({ initial }: Props) {
                   >
                     {j.title_raw}
                   </a>
-                  <div className="text-[11px] text-neutral-500">{j.location}</div>
+                  <div className="text-[11px] text-muted">{j.location}</div>
                 </td>
                 <td className="px-3 py-2">{j.employer}</td>
                 <td className="px-3 py-2">
-                  <span className="text-[11px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100">
+                  <span className="text-[11px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-line/40">
                     {j.domain}
                   </span>
                 </td>
@@ -265,7 +265,7 @@ export function AdminJobsClient({ initial }: Props) {
                   {j.is_open ? (
                     <span className="text-emerald-700 font-medium">open</span>
                   ) : (
-                    <span className="text-neutral-500">closed</span>
+                    <span className="text-muted">closed</span>
                   )}
                 </td>
                 <td className="px-3 py-2 text-right">
@@ -281,7 +281,7 @@ export function AdminJobsClient({ initial }: Props) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-3 py-10 text-center text-neutral-500 text-sm">
+                <td colSpan={8} className="px-3 py-10 text-center text-muted text-sm">
                   No jobs match these filters.
                 </td>
               </tr>
@@ -339,35 +339,35 @@ function AddJobForm({ onCreated }: { onCreated: () => void | Promise<void> }) {
   }
 
   return (
-    <form onSubmit={submit} className="bg-white border border-neutral-200 rounded-xl p-4 grid gap-3 md:grid-cols-2">
+    <form onSubmit={submit} className="bg-surface border border-line rounded-xl p-4 grid gap-3 md:grid-cols-2">
       {err && <div className="md:col-span-2 text-rose-700 text-sm">{err}</div>}
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-neutral-600 font-medium">Title</span>
-        <input required value={title} onChange={(e) => setTitle(e.target.value)} className="border border-neutral-300 rounded-lg px-3 py-2 text-sm" />
+        <span className="text-muted font-medium">Title</span>
+        <input required value={title} onChange={(e) => setTitle(e.target.value)} className="border border-line rounded-lg px-3 py-2 text-sm" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-neutral-600 font-medium">Employer</span>
-        <input required value={employer} onChange={(e) => setEmployer(e.target.value)} className="border border-neutral-300 rounded-lg px-3 py-2 text-sm" />
+        <span className="text-muted font-medium">Employer</span>
+        <input required value={employer} onChange={(e) => setEmployer(e.target.value)} className="border border-line rounded-lg px-3 py-2 text-sm" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-neutral-600 font-medium">Source URL</span>
-        <input type="url" value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} placeholder="https://…" className="border border-neutral-300 rounded-lg px-3 py-2 text-sm" />
+        <span className="text-muted font-medium">Source URL</span>
+        <input type="url" value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} placeholder="https://…" className="border border-line rounded-lg px-3 py-2 text-sm" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-neutral-600 font-medium">Location</span>
-        <input value={location} onChange={(e) => setLocation(e.target.value)} className="border border-neutral-300 rounded-lg px-3 py-2 text-sm" />
+        <span className="text-muted font-medium">Location</span>
+        <input value={location} onChange={(e) => setLocation(e.target.value)} className="border border-line rounded-lg px-3 py-2 text-sm" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-neutral-600 font-medium">Domain</span>
-        <input value={domain} onChange={(e) => setDomain(e.target.value)} className="border border-neutral-300 rounded-lg px-3 py-2 text-sm" />
+        <span className="text-muted font-medium">Domain</span>
+        <input value={domain} onChange={(e) => setDomain(e.target.value)} className="border border-line rounded-lg px-3 py-2 text-sm" />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-neutral-600 font-medium">Seniority</span>
-        <input value={seniority} onChange={(e) => setSeniority(e.target.value)} className="border border-neutral-300 rounded-lg px-3 py-2 text-sm" />
+        <span className="text-muted font-medium">Seniority</span>
+        <input value={seniority} onChange={(e) => setSeniority(e.target.value)} className="border border-line rounded-lg px-3 py-2 text-sm" />
       </label>
       <label className="md:col-span-2 flex flex-col gap-1 text-sm">
-        <span className="text-neutral-600 font-medium">Description</span>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="border border-neutral-300 rounded-lg px-3 py-2 text-sm font-mono" />
+        <span className="text-muted font-medium">Description</span>
+        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="border border-line rounded-lg px-3 py-2 text-sm font-mono" />
       </label>
       <div className="md:col-span-2 flex justify-end">
         <button type="submit" disabled={busy} className="rounded-lg bg-accent text-white px-4 py-2 text-sm font-semibold disabled:opacity-50">

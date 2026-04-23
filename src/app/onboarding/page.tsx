@@ -42,19 +42,19 @@ const STEPS = [
 export default function OnboardingPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-16">
-      <div className="text-[11px] uppercase tracking-[0.2em] text-neutral-500 mb-3">Onboarding walkthrough</div>
+      <div className="text-[11px] uppercase tracking-[0.2em] text-muted mb-3">Onboarding walkthrough</div>
       <h1 className="text-4xl font-bold text-ink">Six steps. No forms for forms' sake.</h1>
-      <p className="text-neutral-600 mt-3 leading-relaxed">
+      <p className="text-muted mt-3 leading-relaxed">
         We ask once, deeply — then we stop asking. Every answer feeds a structured schema that the matching engine uses
         forever. This page shows what onboarding covers in the real product, with examples from the demo candidates.
       </p>
 
       <div className="mt-10 space-y-6">
         {STEPS.map((s) => (
-          <div key={s.k} className="bg-white border border-neutral-200 rounded-xl p-5">
+          <div key={s.k} className="bg-surface border border-line rounded-xl p-5">
             <div className="font-semibold text-ink">{s.title}</div>
-            <div className="mt-2 text-sm text-neutral-700 leading-relaxed">{s.body}</div>
-            <div className="mt-3 text-xs text-neutral-500 italic">{s.demo}</div>
+            <div className="mt-2 text-sm text-ink/90 leading-relaxed">{s.body}</div>
+            <div className="mt-3 text-xs text-muted italic">{s.demo}</div>
           </div>
         ))}
       </div>

@@ -2,17 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+/* -----------------------------------------------------------------------
+ * Pablo Jobs theme tokens.
+ * Light = warm cream paper, deep ink, burnt-amber accent (Pablo tones).
+ * Dark = deep espresso background, cream ink, brighter gold accent.
+ * Tokens are RGB triplets so Tailwind's alpha modifiers (/50, /80) work.
+ * --------------------------------------------------------------------- */
 :root {
   color-scheme: light;
+
+  --color-paper: 251 246 236;      /* #FBF6EC */
+  --color-surface: 255 252 244;    /* #FFFCF4 */
+  --color-ink: 27 18 7;            /* #1B1207 */
+  --color-muted: 121 108 90;       /* #796C5A */
+  --color-line: 229 217 196;       /* #E5D9C4 */
+  --color-accent: 184 138 66;      /* #B88A42  (Pablo gold) */
+  --color-accent2: 141 93 37;      /* #8D5D25  (cocoa) */
+  --color-good: 46 125 97;         /* #2E7D61 */
+  --color-warn: 200 82 28;         /* #C8521C */
+  --color-bad: 190 47 47;          /* #BE2F2F */
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-paper: 20 15 9;          /* #140F09 espresso */
+  --color-surface: 30 23 15;       /* #1E170F */
+  --color-ink: 243 232 210;        /* #F3E8D2 */
+  --color-muted: 166 149 126;      /* #A6957E */
+  --color-line: 54 43 29;          /* #362B1D */
+  --color-accent: 227 176 103;     /* #E3B067 gold */
+  --color-accent2: 207 156 83;     /* #CF9C53 */
+  --color-good: 88 189 145;        /* #58BD91 */
+  --color-warn: 228 153 83;        /* #E49953 */
+  --color-bad: 239 108 108;        /* #EF6C6C */
+}
+
+/* If the user hasn't picked a theme yet, honor their OS preference. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --color-paper: 20 15 9;
+    --color-surface: 30 23 15;
+    --color-ink: 243 232 210;
+    --color-muted: 166 149 126;
+    --color-line: 54 43 29;
+    --color-accent: 227 176 103;
+    --color-accent2: 207 156 83;
+    --color-good: 88 189 145;
+    --color-warn: 228 153 83;
+    --color-bad: 239 108 108;
+  }
 }
 
 html, body {
-  background: #FAFAF7;
-  color: #0B1220;
+  background: rgb(var(--color-paper));
+  color: rgb(var(--color-ink));
 }
 
 body {
   font-feature-settings: "ss01", "cv02", "cv11";
+  transition: background-color 160ms ease, color 160ms ease;
 }
 
 /* Prose tweaks */

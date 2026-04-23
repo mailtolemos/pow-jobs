@@ -1,19 +1,25 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Nav } from "@/components/Nav";
+import { ThemeProvider, ThemeScript } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "PoW Jobs — Proof of Work",
+  title: "Pablo Jobs — Find your next move.",
   description:
-    "Candidate-first job matching for finance and crypto professionals. We remember you and only send matches worth your time.",
+    "Pablo Jobs connects top talent with the fastest-growing companies in crypto, fintech, and global finance. No noise, just signal.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <Nav />
-        <main>{children}</main>
+      <head>
+        <ThemeScript />
+      </head>
+      <body className="bg-paper text-ink">
+        <ThemeProvider>
+          <Nav />
+          <main>{children}</main>
+        </ThemeProvider>
       </body>
     </html>
   );

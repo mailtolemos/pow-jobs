@@ -47,8 +47,8 @@ export async function POST(req: Request) {
   if (text === "/start" || text === "/help") {
     await sendTelegramMessage(
       chatId,
-      "👋 Hi! I'm the PoW Jobs alert bot.\n\n" +
-        "To link this chat to your account, go to <b>PoW Jobs → Profile → Alerts → Generate link code</b> and send me <code>/start &lt;code&gt;</code>.",
+      "👋 Hi! I'm the Pablo Jobs alert bot.\n\n" +
+        "To link this chat to your account, go to <b>Pablo Jobs → Profile → Alerts → Generate link code</b> and send me <code>/start &lt;code&gt;</code>.",
       { parseMode: "HTML" },
     );
     return NextResponse.json({ ok: true });

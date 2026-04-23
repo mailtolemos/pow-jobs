@@ -14,13 +14,13 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <>
-      <div className="border-b border-neutral-200 bg-white">
+      <div className="border-b border-line bg-surface">
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center gap-4 text-sm">
           <span className="text-[10px] uppercase tracking-widest text-accent font-semibold">
             Admin
           </span>
           <AdminNav />
-          <span className="ml-auto text-xs text-neutral-500">
+          <span className="ml-auto text-xs text-muted">
             Signed in as <span className="font-medium">{user.email}</span>
             {" "}
             <Link href="/" className="ml-2 underline">exit</Link>

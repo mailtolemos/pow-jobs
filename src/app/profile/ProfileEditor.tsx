@@ -267,8 +267,8 @@ export function ProfileEditor({ userEmail, candidate, extras, telegramBotUsernam
           </button>
         </div>
         {importOpen && (
-          <div className="mt-3 bg-neutral-50 border border-neutral-200 rounded-lg p-4">
-            <p className="text-xs text-neutral-600 mb-2">
+          <div className="mt-3 bg-paper border border-line rounded-lg p-4">
+            <p className="text-xs text-muted mb-2">
               LinkedIn blocks automated fetches, so paste your About and top Experience entries here. We&rsquo;ll
               extract a draft profile you can review before saving.
             </p>
@@ -294,7 +294,7 @@ export function ProfileEditor({ userEmail, candidate, extras, telegramBotUsernam
                   setImportOpen(false);
                   setImportText("");
                 }}
-                className="text-xs text-neutral-500"
+                className="text-xs text-muted"
               >
                 Cancel
               </button>
@@ -515,7 +515,7 @@ export function ProfileEditor({ userEmail, candidate, extras, telegramBotUsernam
                 Linked
               </span>
             ) : (
-              <span className="text-xs text-neutral-500">Not linked</span>
+              <span className="text-xs text-muted">Not linked</span>
             )}
             <button
               type="button"
@@ -527,8 +527,8 @@ export function ProfileEditor({ userEmail, candidate, extras, telegramBotUsernam
             </button>
           </div>
           {state.telegram_link_token && telegramBotUsername && (
-            <div className="mt-3 bg-neutral-50 border border-neutral-200 rounded-lg p-3 text-xs">
-              <div className="text-neutral-600 mb-1">
+            <div className="mt-3 bg-paper border border-line rounded-lg p-3 text-xs">
+              <div className="text-muted mb-1">
                 Open Telegram, message{" "}
                 <a
                   className="text-accent underline"
@@ -540,21 +540,21 @@ export function ProfileEditor({ userEmail, candidate, extras, telegramBotUsernam
                 </a>{" "}
                 or send:
               </div>
-              <code className="font-mono text-[11px] block bg-white border border-neutral-200 rounded px-2 py-1">
+              <code className="font-mono text-[11px] block bg-surface border border-line rounded px-2 py-1">
                 /start {state.telegram_link_token}
               </code>
             </div>
           )}
           {state.telegram_link_token && !telegramBotUsername && (
-            <div className="mt-2 text-xs text-neutral-500">
+            <div className="mt-2 text-xs text-muted">
               Code: <code className="font-mono">{state.telegram_link_token}</code>
             </div>
           )}
         </Field>
       </Section>
 
-      <div className="sticky bottom-4 flex items-center justify-between rounded-xl bg-white border border-neutral-200 shadow-sm px-5 py-3">
-        <div className="text-xs text-neutral-500">
+      <div className="sticky bottom-4 flex items-center justify-between rounded-xl bg-surface border border-line shadow-sm px-5 py-3">
+        <div className="text-xs text-muted">
           Profile is used for every scoring run. Changes take effect immediately.
         </div>
         <button
@@ -572,7 +572,7 @@ export function ProfileEditor({ userEmail, candidate, extras, telegramBotUsernam
 // --- UI primitives ---
 
 const inputCls =
-  "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/40";
+  "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent/40";
 
 function Section({
   title,
@@ -584,9 +584,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="bg-white border border-neutral-200 rounded-xl p-6">
+    <section className="bg-surface border border-line rounded-xl p-6">
       <h2 className="text-lg font-semibold text-ink">{title}</h2>
-      {subtitle && <p className="text-xs text-neutral-500 mt-1 mb-3">{subtitle}</p>}
+      {subtitle && <p className="text-xs text-muted mt-1 mb-3">{subtitle}</p>}
       <div className={subtitle ? "mt-4 space-y-4" : "mt-3 space-y-4"}>{children}</div>
     </section>
   );
@@ -605,9 +605,9 @@ function Field({
 }) {
   return (
     <label className={`block ${className ?? ""}`}>
-      <span className="block text-xs uppercase tracking-wider text-neutral-500 mb-1">{label}</span>
+      <span className="block text-xs uppercase tracking-wider text-muted mb-1">{label}</span>
       {children}
-      {hint && <span className="block text-[11px] text-neutral-500 mt-1">{hint}</span>}
+      {hint && <span className="block text-[11px] text-muted mt-1">{hint}</span>}
     </label>
   );
 }
@@ -633,7 +633,7 @@ function ChipGroup<T extends string>({
             className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
               on
                 ? "bg-accent text-white border-accent"
-                : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
+                : "bg-surface text-ink/90 border-line hover:border-line"
             }`}
           >
             {label}
@@ -658,8 +658,8 @@ function WeightSlider({
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1">
-        <span className="text-xs uppercase tracking-wider text-neutral-500">{label}</span>
-        <span className="text-xs text-neutral-500 font-mono">{value.toFixed(2)}</span>
+        <span className="text-xs uppercase tracking-wider text-muted">{label}</span>
+        <span className="text-xs text-muted font-mono">{value.toFixed(2)}</span>
       </div>
       <input
         type="range"
@@ -670,7 +670,7 @@ function WeightSlider({
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full"
       />
-      {hint && <div className="text-[11px] text-neutral-500 mt-1">{hint}</div>}
+      {hint && <div className="text-[11px] text-muted mt-1">{hint}</div>}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { isLLMAvailable, currentProvider, currentModel } from "@/lib/llm";
 import { getSessionUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // POST /api/match  { candidateId?, useLLM?, applyFloor? }
 // If candidateId is not provided, uses the signed-in user's candidate profile.

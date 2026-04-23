@@ -17,7 +17,7 @@ export default async function EmailPreviewPage({ searchParams }: Props) {
   if (!activeId) {
     return (
       <div className="max-w-3xl mx-auto px-6 py-16">
-        <div className="text-neutral-600">No candidates in the database — run <code>npm run seed</code>.</div>
+        <div className="text-muted">No candidates in the database — run <code>npm run seed</code>.</div>
       </div>
     );
   }
@@ -26,7 +26,7 @@ export default async function EmailPreviewPage({ searchParams }: Props) {
   if (!candidate) {
     return (
       <div className="max-w-3xl mx-auto px-6 py-16">
-        <div className="text-neutral-600">Candidate not found.</div>
+        <div className="text-muted">Candidate not found.</div>
       </div>
     );
   }
@@ -55,7 +55,7 @@ export default async function EmailPreviewPage({ searchParams }: Props) {
     <div className="max-w-4xl mx-auto px-6 py-10">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-ink">Weekly digest preview</h1>
-        <p className="text-neutral-600 mt-1">Rendered HTML of what the candidate actually receives.</p>
+        <p className="text-muted mt-1">Rendered HTML of what the candidate actually receives.</p>
       </div>
 
       <div className="flex items-center gap-2 mb-6 flex-wrap">
@@ -66,7 +66,7 @@ export default async function EmailPreviewPage({ searchParams }: Props) {
             className={`px-3 py-2 rounded-lg text-sm font-medium border ${
               c.id === activeId
                 ? "bg-accent text-white border-accent"
-                : "bg-white text-ink border-neutral-300 hover:border-neutral-400"
+                : "bg-surface text-ink border-line hover:border-line"
             }`}
           >
             {c.display_name}
@@ -75,15 +75,15 @@ export default async function EmailPreviewPage({ searchParams }: Props) {
         <Link
           href={`/email-preview?c=${activeId}${silence ? "" : "&silence=1"}`}
           className={`ml-auto px-3 py-2 rounded-lg text-sm font-medium border ${
-            silence ? "bg-amber-100 border-amber-300 text-amber-900" : "bg-white border-neutral-300"
+            silence ? "bg-amber-100 border-amber-300 text-amber-900" : "bg-surface border-line"
           }`}
         >
           {silence ? "Showing silence week" : "Show silence week"}
         </Link>
       </div>
 
-      <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden">
-        <div className="px-4 py-2 bg-neutral-50 border-b border-neutral-200 text-xs text-neutral-500 flex items-center gap-4">
+      <div className="bg-surface border border-line rounded-xl overflow-hidden">
+        <div className="px-4 py-2 bg-paper border-b border-line text-xs text-muted flex items-center gap-4">
           <span>
             <strong className="text-ink">From:</strong> digest@powjobs.xyz
           </span>

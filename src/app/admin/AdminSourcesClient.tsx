@@ -137,7 +137,7 @@ export function AdminSourcesClient({ initial }: Props) {
           </div>
           {typeof lastReport.llm_classified === "number" && (
             <div className="text-xs mt-1">
-              Claude classified {lastReport.llm_classified} / {lastReport.fetched} (others used heuristic fallback).
+              LLM classified {lastReport.llm_classified} / {lastReport.fetched} (others used heuristic fallback).
             </div>
           )}
           {(lastReport.llm_errors?.length ?? 0) > 0 && (
@@ -163,35 +163,35 @@ export function AdminSourcesClient({ initial }: Props) {
         <h2 className="text-xl font-semibold text-ink mb-3">Add a source</h2>
         <form
           onSubmit={handleAdd}
-          className="bg-white border border-neutral-200 rounded-xl p-5 grid gap-3 md:grid-cols-2"
+          className="bg-surface border border-line rounded-xl p-5 grid gap-3 md:grid-cols-2"
         >
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-neutral-600 font-medium">Name</span>
+            <span className="text-muted font-medium">Name</span>
             <input
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Cryptocurrency Jobs"
-              className="border border-neutral-300 rounded-lg px-3 py-2 text-sm"
+              className="border border-line rounded-lg px-3 py-2 text-sm"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-neutral-600 font-medium">URL</span>
+            <span className="text-muted font-medium">URL</span>
             <input
               required
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://cryptocurrencyjobs.co/feed"
-              className="border border-neutral-300 rounded-lg px-3 py-2 text-sm"
+              className="border border-line rounded-lg px-3 py-2 text-sm"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-neutral-600 font-medium">Kind</span>
+            <span className="text-muted font-medium">Kind</span>
             <select
               value={kind}
               onChange={(e) => setKind(e.target.value as SourceKind)}
-              className="border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white"
+              className="border border-line rounded-lg px-3 py-2 text-sm bg-surface"
             >
               {KINDS.map((k) => (
                 <option key={k} value={k}>
@@ -201,12 +201,12 @@ export function AdminSourcesClient({ initial }: Props) {
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-neutral-600 font-medium">Notes</span>
+            <span className="text-muted font-medium">Notes</span>
             <input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Optional"
-              className="border border-neutral-300 rounded-lg px-3 py-2 text-sm"
+              className="border border-line rounded-lg px-3 py-2 text-sm"
             />
           </label>
           <div className="md:col-span-2 flex justify-end">
@@ -226,7 +226,7 @@ export function AdminSourcesClient({ initial }: Props) {
           Catalogue ({sources.length})
         </h2>
         {sources.length === 0 ? (
-          <div className="bg-white border border-neutral-200 rounded-xl p-8 text-center text-sm text-neutral-600">
+          <div className="bg-surface border border-line rounded-xl p-8 text-center text-sm text-muted">
             No sources yet. Add one above to start tracking a job board or RSS feed.
           </div>
         ) : (
@@ -284,23 +284,23 @@ function SourceRowEditor({
   }
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-xl p-4">
+    <div className="bg-surface border border-line rounded-xl p-4">
       {editing ? (
         <div className="grid gap-3 md:grid-cols-2">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="border border-neutral-300 rounded-lg px-3 py-2 text-sm"
+            className="border border-line rounded-lg px-3 py-2 text-sm"
           />
           <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="border border-neutral-300 rounded-lg px-3 py-2 text-sm"
+            className="border border-line rounded-lg px-3 py-2 text-sm"
           />
           <select
             value={kind}
             onChange={(e) => setKind(e.target.value as SourceKind)}
-            className="border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white"
+            className="border border-line rounded-lg px-3 py-2 text-sm bg-surface"
           >
             {KINDS.map((k) => (
               <option key={k} value={k}>
@@ -312,12 +312,12 @@ function SourceRowEditor({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Notes"
-            className="border border-neutral-300 rounded-lg px-3 py-2 text-sm"
+            className="border border-line rounded-lg px-3 py-2 text-sm"
           />
           <div className="md:col-span-2 flex gap-2 justify-end">
             <button
               onClick={cancel}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm"
+              className="rounded-lg border border-line px-3 py-1.5 text-sm"
             >
               Cancel
             </button>
@@ -335,7 +335,7 @@ function SourceRowEditor({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-ink">{source.name}</span>
-              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700">
+              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-line/40 text-ink/90">
                 {source.kind}
               </span>
               {!source.active && (
@@ -353,9 +353,9 @@ function SourceRowEditor({
               {source.url}
             </a>
             {source.notes && (
-              <div className="text-xs text-neutral-600 mt-1">{source.notes}</div>
+              <div className="text-xs text-muted mt-1">{source.notes}</div>
             )}
-            <div className="text-[11px] text-neutral-500 mt-1">
+            <div className="text-[11px] text-muted mt-1">
               Last checked:{" "}
               {source.last_checked_at
                 ? new Date(source.last_checked_at).toLocaleString()
@@ -373,14 +373,14 @@ function SourceRowEditor({
             <button
               onClick={() => setEditing(true)}
               disabled={busy || fetching}
-              className="rounded-lg border border-neutral-300 px-2.5 py-1 text-xs font-medium disabled:opacity-50"
+              className="rounded-lg border border-line px-2.5 py-1 text-xs font-medium disabled:opacity-50"
             >
               Edit
             </button>
             <button
               onClick={() => onPatch(source.id, { active: !source.active })}
               disabled={busy || fetching}
-              className="rounded-lg border border-neutral-300 px-2.5 py-1 text-xs font-medium disabled:opacity-50"
+              className="rounded-lg border border-line px-2.5 py-1 text-xs font-medium disabled:opacity-50"
             >
               {source.active ? "Pause" : "Resume"}
             </button>

@@ -1,6 +1,6 @@
 // Normalized shape that ATS-specific fetchers emit before classification.
 // We stay lossy-but-structured: we capture what the source gave us directly,
-// then a classifier (LLM-backed) fills in PoW Jobs' opinionated fields
+// then a classifier (LLM-backed) fills in Pablo Jobs' opinionated fields
 // (domain, seniority, stage, tech_stack, comp) for the final Job shape.
 
 export interface IncomingJob {

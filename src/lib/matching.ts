@@ -243,6 +243,14 @@ function buildHeuristicRationale(
   return `${body}. Score ${(b.total * 100).toFixed(0)}/100 (heuristic, no LLM).`;
 }
 
+// Two-stage scoring. With the LLM judge on, scoring every job serially hits
+// rate limits + Vercel Hobby's 60s cap once we have dozens of roles. So:
+//   1. Structured-only pass across EVERY open job (fast, no LLM).
+//   2. Re-score the top-K-by-structured with the LLM judge.
+// Everything outside the top-K keeps its structured score — which is fine
+// because the feed is sorted, so precision only really matters at the top.
+const LLM_TOP_K = 15;
+
 export async function computeAllMatches(
   candidateId: string,
   opts: ComputeMatchOptions = {},
@@ -250,15 +258,43 @@ export async function computeAllMatches(
   const candidate = await getCandidate(candidateId);
   if (!candidate) throw new Error(`Candidate not found: ${candidateId}`);
   const jobs = await listJobs({ openOnly: true });
-  const results: MatchScore[] = [];
+
+  // Stage 1: structured pass, no LLM.
+  const structuredOpts: ComputeMatchOptions = { ...opts, useLLM: false };
+  const firstPass: Array<{ job: Job; m: MatchScore }> = [];
   for (const job of jobs) {
-    const m = await computeMatch(candidate, job, opts);
-    // Fire-and-forget match persistence — don't block scoring on writes.
-    upsertMatch(m).catch(() => {});
-    results.push(m);
+    const m = await computeMatch(candidate, job, structuredOpts);
+    firstPass.push({ job, m });
   }
-  results.sort((a, b) => b.score - a.score);
-  return results;
+  firstPass.sort((a, b) => b.m.score - a.m.score);
+
+  // Stage 2: promote top-K (that pass hard filters + minimum structured) to LLM.
+  const wantLLM = (opts.useLLM ?? true) && isLLMAvailable();
+  const promoted = new Set<string>();
+  if (wantLLM) {
+    let count = 0;
+    for (const { job, m } of firstPass) {
+      if (count >= LLM_TOP_K) break;
+      if (!m.hard_filter_pass) continue;
+      if (m.score < 0.4) continue;
+      promoted.add(job.id);
+      count += 1;
+    }
+  }
+
+  const finals: MatchScore[] = [];
+  for (const { job, m } of firstPass) {
+    if (promoted.has(job.id)) {
+      const refined = await computeMatch(candidate, job, { ...opts, useLLM: true });
+      upsertMatch(refined).catch(() => {});
+      finals.push(refined);
+    } else {
+      upsertMatch(m).catch(() => {});
+      finals.push(m);
+    }
+  }
+  finals.sort((a, b) => b.score - a.score);
+  return finals;
 }
 
 export async function scoreSingle(

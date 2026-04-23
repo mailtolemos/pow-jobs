@@ -19,7 +19,7 @@ export default async function AdminPage() {
     <div className="max-w-5xl mx-auto px-6 py-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-ink">Sources & job boards</h1>
-        <p className="text-neutral-600 mt-1 text-sm">
+        <p className="text-muted mt-1 text-sm">
           Manage the catalogue of upstream job sources that feed the ingest pipeline.
         </p>
       </div>
@@ -38,8 +38,8 @@ export default async function AdminPage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-white border border-neutral-200 rounded-xl p-4">
-      <div className="text-xs uppercase tracking-widest text-neutral-500">{label}</div>
+    <div className="bg-surface border border-line rounded-xl p-4">
+      <div className="text-xs uppercase tracking-widest text-muted">{label}</div>
       <div className="text-2xl font-bold text-ink mt-1">{value}</div>
     </div>
   );

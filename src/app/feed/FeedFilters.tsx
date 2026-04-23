@@ -100,7 +100,7 @@ export function FeedFilters({ filters, setFilters, availableDomains, matchingCou
     (!filters.includeMgmt ? 1 : 0);
 
   return (
-    <details className="bg-white border border-neutral-200 rounded-xl p-4 mb-4" open>
+    <details className="bg-surface border border-line rounded-xl p-4 mb-4" open>
       <summary className="cursor-pointer text-sm font-semibold text-ink flex items-center gap-2">
         Filters
         {activeCount > 0 && (
@@ -108,7 +108,7 @@ export function FeedFilters({ filters, setFilters, availableDomains, matchingCou
             {activeCount}
           </span>
         )}
-        <span className="ml-auto text-xs font-normal text-neutral-500">
+        <span className="ml-auto text-xs font-normal text-muted">
           {matchingCount} of {totalCount} shown
         </span>
       </summary>
@@ -120,7 +120,7 @@ export function FeedFilters({ filters, setFilters, availableDomains, matchingCou
             value={filters.q}
             onChange={(e) => update({ q: e.target.value })}
             placeholder="title, employer, keywords…"
-            className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm"
+            className="w-full border border-line rounded-lg px-3 py-2 text-sm"
           />
         </div>
         <div>
@@ -154,7 +154,7 @@ export function FeedFilters({ filters, setFilters, availableDomains, matchingCou
                 className={`px-2 py-1 rounded-md text-xs font-medium border ${
                   on
                     ? "bg-ink text-white border-ink"
-                    : "bg-white border-neutral-300 text-neutral-700 hover:border-neutral-400"
+                    : "bg-surface border-line text-ink/90 hover:border-line"
                 }`}
               >
                 {d}
@@ -162,7 +162,7 @@ export function FeedFilters({ filters, setFilters, availableDomains, matchingCou
             );
           })}
           {availableDomains.length === 0 && (
-            <span className="text-xs text-neutral-500">No matches in the current feed.</span>
+            <span className="text-xs text-muted">No matches in the current feed.</span>
           )}
         </div>
       </div>
@@ -180,7 +180,7 @@ export function FeedFilters({ filters, setFilters, availableDomains, matchingCou
                   className={`px-2 py-1 rounded-md text-xs font-medium border ${
                     on
                       ? "bg-ink text-white border-ink"
-                      : "bg-white border-neutral-300 text-neutral-700 hover:border-neutral-400"
+                      : "bg-surface border-line text-ink/90 hover:border-line"
                   }`}
                 >
                   {r}
@@ -201,7 +201,7 @@ export function FeedFilters({ filters, setFilters, availableDomains, matchingCou
                   className={`px-2 py-1 rounded-md text-xs font-medium border uppercase ${
                     on
                       ? "bg-ink text-white border-ink"
-                      : "bg-white border-neutral-300 text-neutral-700 hover:border-neutral-400"
+                      : "bg-surface border-line text-ink/90 hover:border-line"
                   }`}
                 >
                   {j}
@@ -218,23 +218,23 @@ export function FeedFilters({ filters, setFilters, availableDomains, matchingCou
           <select
             value={filters.minSeniority}
             onChange={(e) => update({ minSeniority: Number(e.target.value) })}
-            className="border border-neutral-300 rounded-lg px-2 py-1 text-sm bg-white"
+            className="border border-line rounded-lg px-2 py-1 text-sm bg-surface"
           >
             {IC_BANDS.map((b, i) => (
               <option key={b} value={i}>{b.toUpperCase()}</option>
             ))}
           </select>
-          <span className="text-xs text-neutral-500">to</span>
+          <span className="text-xs text-muted">to</span>
           <select
             value={filters.maxSeniority}
             onChange={(e) => update({ maxSeniority: Number(e.target.value) })}
-            className="border border-neutral-300 rounded-lg px-2 py-1 text-sm bg-white"
+            className="border border-line rounded-lg px-2 py-1 text-sm bg-surface"
           >
             {IC_BANDS.map((b, i) => (
               <option key={b} value={i}>{b.toUpperCase()}</option>
             ))}
           </select>
-          <label className="ml-4 flex items-center gap-1.5 text-sm text-neutral-700">
+          <label className="ml-4 flex items-center gap-1.5 text-sm text-ink/90">
             <input
               type="checkbox"
               checked={filters.includeMgmt}
@@ -249,7 +249,7 @@ export function FeedFilters({ filters, setFilters, availableDomains, matchingCou
         <div className="mt-4 flex justify-end">
           <button
             onClick={reset}
-            className="text-xs text-neutral-600 underline hover:text-ink"
+            className="text-xs text-muted underline hover:text-ink"
           >
             Reset all filters
           </button>
@@ -260,5 +260,5 @@ export function FeedFilters({ filters, setFilters, availableDomains, matchingCou
 }
 
 function Label({ children }: { children: React.ReactNode }) {
-  return <div className="text-[11px] uppercase tracking-widest text-neutral-500 mb-1.5">{children}</div>;
+  return <div className="text-[11px] uppercase tracking-widest text-muted mb-1.5">{children}</div>;
 }
