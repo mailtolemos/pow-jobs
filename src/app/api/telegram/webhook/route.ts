@@ -48,7 +48,12 @@ export async function POST(req: Request) {
     await sendTelegramMessage(
       chatId,
       "👋 Hi! I'm the Pablo Jobs alert bot.\n\n" +
-        "To link this chat to your account, go to <b>Pablo Jobs → Profile → Alerts → Generate link code</b> and send me <code>/start &lt;code&gt;</code>.",
+        "<b>Commands</b>\n" +
+        "• <code>/start &lt;code&gt;</code> — link this chat to your Pablo Jobs account (grab the code from Profile → Alerts)\n" +
+        "• <code>/chatid</code> — report this chat's ID (used when setting up the broadcast channel)\n" +
+        "• <code>/stop</code> — pause alerts\n\n" +
+        "<b>Broadcast setup</b>\n" +
+        "Add me to your jobs channel as an <b>admin</b> with permission to post, then send <code>/chatid</code> there. Put that ID into Vercel as <code>TELEGRAM_BROADCAST_CHAT_ID</code>.",
       { parseMode: "HTML" },
     );
     return NextResponse.json({ ok: true });
@@ -77,6 +82,19 @@ export async function POST(req: Request) {
       chatId,
       `✅ Linked. You'll get new matches here whenever they clear your precision floor.\n\n` +
         `Say <code>/stop</code> to pause alerts, or manage everything on the website.`,
+      { parseMode: "HTML" },
+    );
+    return NextResponse.json({ ok: true });
+  }
+
+  if (text === "/chatid" || text === "/id") {
+    // Utility: reports the current chat's numeric ID. Useful for grabbing the
+    // TELEGRAM_BROADCAST_CHAT_ID value when setting up the broadcast channel.
+    const kind = msg.chat.type; // "private" | "group" | "supergroup" | "channel"
+    await sendTelegramMessage(
+      chatId,
+      `<b>Chat ID:</b> <code>${chatId}</code>\n<b>Type:</b> ${kind}\n\n` +
+        `To broadcast new jobs here, set on Vercel:\n<code>TELEGRAM_BROADCAST_CHAT_ID=${chatId}</code>`,
       { parseMode: "HTML" },
     );
     return NextResponse.json({ ok: true });
