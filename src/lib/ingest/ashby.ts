@@ -9,19 +9,32 @@
 
 import type { IncomingJob } from "./types";
 
+// Safely decode a URL path segment. Path segments can contain %-escapes
+// (e.g. "Solana%20Foundation" for an org slug with a space), and we must
+// decode to the raw slug before re-encoding in the API URL — otherwise the
+// % gets double-encoded to %25.
+function decodeSeg(seg: string | undefined): string | null {
+  if (!seg) return null;
+  try {
+    return decodeURIComponent(seg);
+  } catch {
+    return seg;
+  }
+}
+
 export function detectAshbySlug(url: string): string | null {
   try {
     const u = new URL(url.trim());
     const host = u.hostname.toLowerCase();
     if (host === "jobs.ashbyhq.com") {
       const seg = u.pathname.split("/").filter(Boolean)[0];
-      return seg || null;
+      return decodeSeg(seg);
     }
     if (host === "api.ashbyhq.com") {
       // /posting-api/job-board/{slug}
       const parts = u.pathname.split("/").filter(Boolean);
       const i = parts.indexOf("job-board");
-      return i >= 0 ? parts[i + 1] || null : null;
+      return i >= 0 ? decodeSeg(parts[i + 1]) : null;
     }
     if (host.endsWith(".ashbyhq.com")) {
       return host.split(".")[0];
@@ -111,8 +124,10 @@ export async function fetchAshby(sourceUrl: string, employerGuess?: string): Pro
       const locs = [j.location, ...(j.secondaryLocations ?? []).map((s) => s.location)]
         .filter(Boolean)
         .join("; ");
+      // Sanitize slug for the id since raw slug may contain spaces or punctuation.
+      const safeSlug = slug.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase();
       return {
-        external_id: `ashby_${slug}_${j.id}`,
+        external_id: `ashby_${safeSlug}_${j.id}`,
         source_channel: "ashby",
         source_url: j.jobUrl || `https://jobs.ashbyhq.com/${slug}/${j.id}`,
         employer,

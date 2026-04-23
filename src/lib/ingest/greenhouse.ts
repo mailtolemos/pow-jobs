@@ -8,15 +8,24 @@
 
 import type { IncomingJob } from "./types";
 
+function decodeSeg(seg: string | undefined): string | null {
+  if (!seg) return null;
+  try {
+    return decodeURIComponent(seg);
+  } catch {
+    return seg;
+  }
+}
+
 export function detectGreenhouseToken(url: string): string | null {
   try {
     const u = new URL(url.trim());
     const host = u.hostname.toLowerCase();
     if (host === "boards.greenhouse.io" || host === "boards.eu.greenhouse.io") {
       const q = u.searchParams.get("for");
-      if (q) return q;
+      if (q) return decodeSeg(q);
       const seg = u.pathname.split("/").filter(Boolean)[0];
-      if (seg && seg !== "embed") return seg;
+      if (seg && seg !== "embed") return decodeSeg(seg);
       return null;
     }
     if (host.endsWith(".greenhouse.io")) {
@@ -87,13 +96,14 @@ export async function fetchGreenhouse(sourceUrl: string, employerGuess?: string)
   if (!res.ok) throw new Error(`Greenhouse API ${res.status}: ${apiUrl}`);
   const data = (await res.json()) as { jobs?: GhJob[] };
   const employer = employerGuess?.trim() || token;
+  const safeToken = token.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase();
   return (data.jobs ?? []).map<IncomingJob>((j) => {
     const loc = j.location?.name || (j.offices ?? []).map((o) => o.name || o.location).filter(Boolean).join("; ") || "Remote";
     const dept = (j.departments ?? []).map((d) => d.name).filter(Boolean).join(", ") || null;
     const html = j.content || "";
     const text = html ? stripHtml(html) : null;
     return {
-      external_id: `gh_${token}_${j.id}`,
+      external_id: `gh_${safeToken}_${j.id}`,
       source_channel: "greenhouse",
       source_url: j.absolute_url,
       employer,

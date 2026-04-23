@@ -7,18 +7,27 @@
 
 import type { IncomingJob } from "./types";
 
+function decodeSeg(seg: string | undefined): string | null {
+  if (!seg) return null;
+  try {
+    return decodeURIComponent(seg);
+  } catch {
+    return seg;
+  }
+}
+
 export function detectLeverSlug(url: string): string | null {
   try {
     const u = new URL(url.trim());
     const host = u.hostname.toLowerCase();
     if (host === "jobs.lever.co") {
       const seg = u.pathname.split("/").filter(Boolean)[0];
-      return seg || null;
+      return decodeSeg(seg);
     }
     if (host === "api.lever.co") {
       const parts = u.pathname.split("/").filter(Boolean);
       const i = parts.indexOf("postings");
-      return i >= 0 ? parts[i + 1] || null : null;
+      return i >= 0 ? decodeSeg(parts[i + 1]) : null;
     }
     return null;
   } catch {
@@ -63,12 +72,13 @@ export async function fetchLever(sourceUrl: string, employerGuess?: string): Pro
   if (!res.ok) throw new Error(`Lever API ${res.status}: ${apiUrl}`);
   const data = (await res.json()) as LeverPosting[];
   const employer = employerGuess?.trim() || slug;
+  const safeSlug = slug.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase();
   return (data ?? []).map<IncomingJob>((j) => {
     const cat = j.categories ?? {};
     const loc = cat.location || (cat.allLocations ?? []).join("; ") || "Remote";
     const body = [j.descriptionPlain, j.additionalPlain].filter(Boolean).join("\n\n");
     return {
-      external_id: `lever_${slug}_${j.id}`,
+      external_id: `lever_${safeSlug}_${j.id}`,
       source_channel: "lever",
       source_url: j.hostedUrl,
       employer,
