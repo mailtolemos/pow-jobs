@@ -1,22 +1,11 @@
 // Generic HTML career-page fallback.
 // For career pages without a well-known ATS, we fetch the HTML, strip it to
-// visible text, and ask Claude to extract a list of role postings. This is
-// intentionally best-effort: we won't hit every custom site, but it covers
-// enough ground to be useful.
+// visible text, and ask the configured LLM to extract a list of role postings.
+// Provider resolution (Groq > Anthropic) lives in ../llm; this file only asks
+// for extraction.
 
-import Anthropic from "@anthropic-ai/sdk";
 import type { IncomingJob } from "./types";
-
-const MODEL = process.env.CLAUDE_MODEL || "claude-sonnet-4-6";
-
-let _client: Anthropic | null = null;
-function client(): Anthropic | null {
-  if (_client) return _client;
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return null;
-  _client = new Anthropic({ apiKey: key });
-  return _client;
-}
+import { chatJSON, isLLMAvailable } from "../llm";
 
 function stripToText(html: string): string {
   return html
@@ -48,8 +37,11 @@ function hostnameOf(url: string): string {
 }
 
 export async function fetchHtmlCareerPage(sourceUrl: string, employerGuess?: string): Promise<IncomingJob[]> {
-  const c = client();
-  if (!c) throw new Error("Generic HTML fallback requires ANTHROPIC_API_KEY to be set");
+  if (!isLLMAvailable()) {
+    throw new Error(
+      "Generic HTML fallback requires an LLM: set GROQ_API_KEY (free) or ANTHROPIC_API_KEY on Vercel and redeploy",
+    );
+  }
   const res = await fetch(sourceUrl, {
     headers: {
       accept: "text/html",
@@ -61,7 +53,10 @@ export async function fetchHtmlCareerPage(sourceUrl: string, employerGuess?: str
   });
   if (!res.ok) throw new Error(`HTML fetch ${res.status}: ${sourceUrl}`);
   const html = await res.text();
-  const text = stripToText(html).slice(0, 60000); // cap prompt size
+  // Cap at ~24KB of text. Groq's llama-3.3-70b-versatile has an 8K output
+  // token cap but ~128K input — this stays well within limits while keeping
+  // classifications snappy.
+  const text = stripToText(html).slice(0, 24000);
 
   const employer = employerGuess?.trim() || hostnameOf(sourceUrl);
 
@@ -75,26 +70,12 @@ Employer guess: ${employer}
 Page text (whitespace-normalized):
 ${text}`;
 
-  const resp = await c.messages.create({
-    model: MODEL,
-    max_tokens: 4096,
-    system,
-    messages: [{ role: "user", content: user }],
-  });
+  const { data, error } = await chatJSON<{
+    jobs?: Array<{ title?: string; url?: string; location?: string; department?: string | null }>;
+  }>({ system, user, maxTokens: 4096 });
 
-  const raw = resp.content
-    .filter((b) => b.type === "text")
-    .map((b) => ("text" in b ? b.text : ""))
-    .join("")
-    .trim()
-    .replace(/^```json\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  let parsed: { jobs?: Array<{ title?: string; url?: string; location?: string; department?: string | null }> };
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return [];
+  if (!data) {
+    throw new Error(error || "HTML extractor: LLM returned no usable JSON");
   }
 
   const origin = (() => {
@@ -105,7 +86,7 @@ ${text}`;
     }
   })();
 
-  return (parsed.jobs ?? [])
+  return (data.jobs ?? [])
     .filter((j) => j.title && j.url)
     .map<IncomingJob>((j) => {
       let absolute = j.url as string;
