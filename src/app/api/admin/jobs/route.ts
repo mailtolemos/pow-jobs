@@ -77,6 +77,7 @@ export async function POST(req: Request) {
     function: d.function as Job["function"],
     seniority: d.seniority as Job["seniority"],
     tech_stack: d.tech_stack,
+    department: null,
     description: d.description,
     base_min: d.base_min,
     base_max: d.base_max,
@@ -100,7 +101,13 @@ export async function POST(req: Request) {
     is_open: true,
     employer_verified: true,
   };
-  await upsertJob(job);
+  try {
+    await upsertJob(job);
+  } catch (e) {
+    // Surface the actual DB error to the admin UI instead of silently failing.
+    const msg = (e as Error).message || String(e);
+    return NextResponse.json({ error: `upsert failed: ${msg}`, job }, { status: 500 });
+  }
   return NextResponse.json({ job });
 }
 
