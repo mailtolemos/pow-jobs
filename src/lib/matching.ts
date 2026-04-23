@@ -12,6 +12,42 @@ export interface HardFilterResult {
   failed: string[];
 }
 
+// Functions are sometimes near-equivalent; respect those as "acceptable" even
+// when the candidate picked a neighbor. Keeps results sharp without feeling
+// overly strict. E.g. a Head of People with function=ops can still see
+// business roles that are operationally adjacent.
+const FUNCTION_ADJACENCY: Record<string, string[]> = {
+  engineering: ["data"],
+  data: ["engineering", "quant-research"],
+  "quant-research": ["data", "trading"],
+  trading: ["quant-research"],
+  ops: ["business", "legal-compliance"],
+  business: ["ops"],
+  "legal-compliance": ["ops"],
+  product: ["design", "engineering"],
+  design: ["product"],
+};
+
+function functionMatches(candidateFns: string[], jobFn: string): boolean {
+  if (candidateFns.length === 0) return true; // unconstrained
+  if (candidateFns.includes(jobFn)) return true;
+  for (const cf of candidateFns) {
+    if ((FUNCTION_ADJACENCY[cf] ?? []).includes(jobFn)) return true;
+  }
+  return false;
+}
+
+function domainMatches(candidateDomains: string[], jobDomain: string): boolean {
+  if (candidateDomains.length === 0) return true;
+  if (candidateDomains.includes(jobDomain)) return true;
+  // Prefix match: crypto:* accepts any crypto:*, finance:* accepts any finance:*.
+  // If the candidate selected ANY domain with this prefix, let adjacent
+  // crypto/finance roles through — they're still in the same world.
+  const jobPrefix = jobDomain.split(":")[0];
+  if (!jobPrefix) return false;
+  return candidateDomains.some((d) => d.startsWith(`${jobPrefix}:`));
+}
+
 export function applyHardFilters(candidate: Candidate, job: Job): HardFilterResult {
   const failed: string[] = [];
 
@@ -30,6 +66,20 @@ export function applyHardFilters(candidate: Candidate, job: Job): HardFilterResu
   // Remote policy compatibility.
   if (candidate.remote_policy_ok.length > 0 && !candidate.remote_policy_ok.includes(job.remote_policy)) {
     failed.push("remote_policy");
+  }
+
+  // Function fit — hard reject if the candidate picked functions and this job
+  // sits outside the candidate's chosen + adjacent set. Stops "Head of People"
+  // seeing Rust engineer roles.
+  if (!functionMatches(candidate.functions as string[], job.function)) {
+    failed.push("function_mismatch");
+  }
+
+  // Domain fit — hard reject if the candidate picked domains and this job
+  // isn't in the list (prefix-level adjacent is ok, so crypto:defi candidates
+  // still see crypto:infra roles).
+  if (!domainMatches(candidate.domains_of_interest as string[], job.domain)) {
+    failed.push("domain_mismatch");
   }
 
   if (candidate.visa_needed && !job.visa_sponsored) {

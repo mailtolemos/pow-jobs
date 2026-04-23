@@ -8,6 +8,7 @@ import { fetchHtmlCareerPage } from "./html";
 import { classifyIncoming, classifyHeuristic } from "./classify";
 import type { IncomingJob, IngestResult } from "./types";
 import { getJob, upsertJob, markSourceChecked, type SourceRow } from "../db";
+import { broadcastJob, isBroadcastConfigured } from "../telegram";
 
 export type AtsKind = "ashby" | "greenhouse" | "lever" | "html" | "unknown";
 
@@ -88,8 +89,17 @@ export async function ingestSource(source: SourceRow): Promise<IngestResult> {
         ? { ...(await classifyHeuristic(inc)), llm_used: false, llm_error: "skipped: LLM circuit breaker open" }
         : await classifyIncoming(inc);
       await upsertJob(job);
-      if (existing) result.updated += 1;
-      else result.created += 1;
+      if (existing) {
+        result.updated += 1;
+      } else {
+        result.created += 1;
+        // Only broadcast brand-new jobs to the Telegram channel. Re-ingests
+        // (same external_id) are silent. Fire-and-forget: a failed Telegram
+        // post must never block the ingest pipeline.
+        if (isBroadcastConfigured()) {
+          broadcastJob(job).catch(() => undefined);
+        }
+      }
       if (llm_used) {
         result.llm_classified += 1;
         consecutiveFails = 0;

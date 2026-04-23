@@ -57,6 +57,7 @@ export interface Job {
   function: Function;
   seniority: SeniorityBand;
   tech_stack: string[];
+  department?: string | null;
   description: string;
   // Comp (all USD)
   base_min: number | null;

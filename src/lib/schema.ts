@@ -40,6 +40,12 @@ CREATE INDEX IF NOT EXISTS idx_jobs_open ON jobs(is_open, domain);
 CREATE INDEX IF NOT EXISTS idx_jobs_employer ON jobs(employer);
 CREATE INDEX IF NOT EXISTS idx_jobs_date_posted ON jobs(date_posted DESC);
 
+-- Additive migration: department is captured from the source ATS (Ashby /
+-- Greenhouse / Lever) when available, used by the public /jobs browser as a
+-- top-level filter. Nullable so older rows still load.
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS department TEXT;
+CREATE INDEX IF NOT EXISTS idx_jobs_department ON jobs(department) WHERE department IS NOT NULL;
+
 -- Users: one row per authenticated account. Candidate profile lives in the
 -- candidates table and points back via user_id. Demo personas have user_id = NULL.
 CREATE TABLE IF NOT EXISTS users (

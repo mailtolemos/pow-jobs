@@ -86,6 +86,7 @@ function rowToJob(row: Row): Job {
     function: row.function as Job["function"],
     seniority: row.seniority as Job["seniority"],
     tech_stack: asArr<string>(row.tech_stack),
+    department: (row.department as string | null) ?? null,
     description: row.description as string,
     base_min: (row.base_min as number | null) ?? null,
     base_max: (row.base_max as number | null) ?? null,
@@ -167,7 +168,7 @@ export async function upsertJob(j: Job): Promise<void> {
   await sql()`
     INSERT INTO jobs (
       id, title_raw, title_normalized, employer, employer_category,
-      domain, function, seniority, tech_stack, description,
+      domain, function, seniority, tech_stack, department, description,
       base_min, base_max, bonus_pct_target, token_pct_target,
       carry_or_equity_pct, vesting_years, cliff_months, location,
       remote_policy, jurisdiction_required, visa_sponsored, regulated,
@@ -175,7 +176,7 @@ export async function upsertJob(j: Job): Promise<void> {
       date_posted, date_last_seen, is_open, employer_verified
     ) VALUES (
       ${j.id}, ${j.title_raw}, ${j.title_normalized}, ${j.employer}, ${j.employer_category},
-      ${j.domain}, ${j.function}, ${j.seniority}, ${JSON.stringify(j.tech_stack)}::jsonb, ${j.description},
+      ${j.domain}, ${j.function}, ${j.seniority}, ${JSON.stringify(j.tech_stack)}::jsonb, ${j.department}, ${j.description},
       ${j.base_min}, ${j.base_max}, ${j.bonus_pct_target}, ${j.token_pct_target},
       ${j.carry_or_equity_pct}, ${j.vesting_years}, ${j.cliff_months}, ${j.location},
       ${j.remote_policy}, ${j.jurisdiction_required}, ${j.visa_sponsored}, ${j.regulated},
@@ -191,6 +192,7 @@ export async function upsertJob(j: Job): Promise<void> {
       function = EXCLUDED.function,
       seniority = EXCLUDED.seniority,
       tech_stack = EXCLUDED.tech_stack,
+      department = EXCLUDED.department,
       description = EXCLUDED.description,
       base_min = EXCLUDED.base_min,
       base_max = EXCLUDED.base_max,
