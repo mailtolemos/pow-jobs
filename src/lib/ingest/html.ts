@@ -36,27 +36,64 @@ function hostnameOf(url: string): string {
   }
 }
 
+// Detect pages where the interesting content is rendered client-side. If we
+// see almost no visible text, virtually no anchors, or classic SPA markers,
+// we can't extract roles from the static HTML and we tell the user plainly
+// instead of silently returning zero jobs.
+function looksLikeSPA(html: string, text: string): string | null {
+  const textLen = text.length;
+  const anchorCount = (html.match(/<a\b/gi) ?? []).length;
+  const jobHintCount = (text.match(/(?:apply|role|engineer|manager|lead|analyst|director|research)/gi) ?? []).length;
+  if (textLen < 600) return `only ${textLen} chars of visible text`;
+  if (anchorCount < 5) return `only ${anchorCount} links in the HTML`;
+  if (jobHintCount < 2) return "no obvious role keywords in the static HTML";
+  // React / Next / Vue root markers present AND very little prose → almost
+  // certainly JS-rendered.
+  if (/<div[^>]+id="(?:__next|root|app)"/i.test(html) && textLen < 3000) {
+    return "JS-rendered root with little static content";
+  }
+  return null;
+}
+
 export async function fetchHtmlCareerPage(sourceUrl: string, employerGuess?: string): Promise<IncomingJob[]> {
   if (!isLLMAvailable()) {
     throw new Error(
       "Generic HTML fallback requires an LLM: set GROQ_API_KEY (free) or ANTHROPIC_API_KEY on Vercel and redeploy",
     );
   }
-  const res = await fetch(sourceUrl, {
-    headers: {
-      accept: "text/html",
-      "user-agent":
-        "Mozilla/5.0 (compatible; pow-jobs-ingest/1.0; +https://pow-jobs.vercel.app)",
-    },
-    cache: "no-store",
-    redirect: "follow",
-  });
+  // Per-request timeout so a slow career page can't hang the whole ingest.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15_000);
+  let res: Response;
+  try {
+    res = await fetch(sourceUrl, {
+      headers: {
+        accept: "text/html",
+        "user-agent":
+          "Mozilla/5.0 (compatible; pow-jobs-ingest/1.0; +https://pow-jobs.vercel.app)",
+      },
+      cache: "no-store",
+      redirect: "follow",
+      signal: ctrl.signal,
+    });
+  } catch (e) {
+    clearTimeout(timer);
+    throw new Error(`HTML fetch failed: ${(e as Error).message}`);
+  }
+  clearTimeout(timer);
   if (!res.ok) throw new Error(`HTML fetch ${res.status}: ${sourceUrl}`);
   const html = await res.text();
-  // Cap at ~24KB of text. Groq's llama-3.3-70b-versatile has an 8K output
-  // token cap but ~128K input — this stays well within limits while keeping
-  // classifications snappy.
   const text = stripToText(html).slice(0, 24000);
+
+  // SPA early-return: if the static HTML doesn't have real content, give the
+  // user an actionable message instead of silently spending an LLM call that
+  // comes back with zero jobs.
+  const spaReason = looksLikeSPA(html, text);
+  if (spaReason) {
+    throw new Error(
+      `This looks like a JS-rendered career page (${spaReason}). The static HTML has no listings to extract — try pointing at the company's Ashby/Greenhouse/Lever board URL instead.`,
+    );
+  }
 
   const employer = employerGuess?.trim() || hostnameOf(sourceUrl);
 
@@ -76,6 +113,11 @@ ${text}`;
 
   if (!data) {
     throw new Error(error || "HTML extractor: LLM returned no usable JSON");
+  }
+  if (!data.jobs || data.jobs.length === 0) {
+    throw new Error(
+      "LLM extracted no roles from the static HTML — the page may be JS-rendered, have moved, or require login. Try the company's direct ATS URL (Ashby/Greenhouse/Lever).",
+    );
   }
 
   const origin = (() => {

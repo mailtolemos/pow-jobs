@@ -20,6 +20,7 @@ interface MatchResponse {
   totalKept: number;
   totalHardFiltered: number;
   matches: Array<{ match: MatchScore; job: Job }>;
+  error?: string;
 }
 
 type Mode = "me" | "demo";
@@ -39,7 +40,10 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
   const [activeDemoId, setActiveDemoId] = useState<string>(demoPersonas[0]?.id ?? "");
   const [data, setData] = useState<MatchResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [useLLM, setUseLLM] = useState(true);
+  // Default: fast structured-only scoring. LLM judge is an opt-in refinement
+  // that users can toggle when they want sharper precision on the top matches.
+  // This keeps /feed snappy regardless of LLM rate limits.
+  const [useLLM, setUseLLM] = useState(false);
   const [applyFloor, setApplyFloor] = useState(true);
   const [filters, setFilters] = useState<FeedFilterState>(() => ({
     ...DEFAULT_FILTERS,
@@ -57,14 +61,39 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
     if (!viewingCandidate) return;
     setLoading(true);
     setData(null);
+    // Hard 55s client timeout so a stuck Vercel function never freezes /feed
+    // forever. Vercel Hobby caps at 60s, but we bail slightly earlier and
+    // render an explanation so the user can retry or toggle off LLM judge.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 55_000);
     fetch("/api/match", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ candidateId: viewingCandidate.id, useLLM, applyFloor }),
+      signal: ctrl.signal,
     })
       .then((r) => r.json())
       .then(setData)
-      .finally(() => setLoading(false));
+      .catch((e) => {
+        const aborted = (e as Error)?.name === "AbortError";
+        setData({
+          threshold: 0.65,
+          llmAvailable: false,
+          totalScored: 0,
+          totalKept: 0,
+          totalHardFiltered: 0,
+          matches: [],
+          error: aborted ? "Scoring timed out. Try again, or turn off LLM judge above." : "Scoring failed. Try again.",
+        });
+      })
+      .finally(() => {
+        clearTimeout(timer);
+        setLoading(false);
+      });
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
     // viewingCandidate identity encoded in mode+activeDemoId
   }, [mode, activeDemoId, useLLM, applyFloor, viewingCandidate]);
 
@@ -172,7 +201,13 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
 
       {loading && <div className="text-muted">Scoring all open roles…</div>}
 
-      {data && (
+      {data?.error && (
+        <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900">
+          {data.error}
+        </div>
+      )}
+
+      {data && !data.error && (
         <>
           <FeedDataSummary data={data} />
           <FeedFiltersWrapper data={data} filters={filters} setFilters={setFilters} mode={mode} />
