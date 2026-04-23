@@ -165,9 +165,9 @@ interface LLMClassification {
   summary: string;
 }
 
-async function llmClassify(inc: IncomingJob): Promise<LLMClassification | null> {
+async function llmClassify(inc: IncomingJob): Promise<{ data: LLMClassification | null; error: string | null }> {
   const c = client();
-  if (!c) return null;
+  if (!c) return { data: null, error: "ANTHROPIC_API_KEY not set" };
   const descr = (inc.description_text || inc.description_html || "").slice(0, 8000);
   const user = `Employer: ${inc.employer}
 Title: ${inc.title}
@@ -183,7 +183,7 @@ ${descr}`;
   try {
     const resp = await c.messages.create({
       model: MODEL,
-      max_tokens: 1024,
+      max_tokens: 1536,
       system: SYSTEM,
       messages: [{ role: "user", content: user }],
     });
@@ -191,31 +191,37 @@ ${descr}`;
       .filter((b) => b.type === "text")
       .map((b) => ("text" in b ? b.text : ""))
       .join("");
-    // Tolerate code fences
-    const cleaned = text.trim().replace(/^```json\s*/i, "").replace(/```$/, "").trim();
-    return JSON.parse(cleaned) as LLMClassification;
-  } catch {
-    return null;
+    // Tolerate markdown fences and leading prose; extract the first {...} block
+    let cleaned = text.trim().replace(/^```json\s*/i, "").replace(/```$/, "").trim();
+    if (!cleaned.startsWith("{")) {
+      const m = cleaned.match(/\{[\s\S]*\}/);
+      if (m) cleaned = m[0];
+    }
+    try {
+      return { data: JSON.parse(cleaned) as LLMClassification, error: null };
+    } catch (e) {
+      return { data: null, error: `JSON parse failed: ${(e as Error).message}; head=${text.slice(0, 200)}` };
+    }
+  } catch (e) {
+    return { data: null, error: `Claude call failed: ${(e as Error).message}` };
   }
 }
 
 // --- Public entrypoint ------------------------------------------------------
 
-export async function classifyIncoming(inc: IncomingJob): Promise<Job> {
+export async function classifyIncoming(
+  inc: IncomingJob,
+): Promise<{ job: Job; llm_used: boolean; llm_error: string | null }> {
   const now = new Date().toISOString();
   const id = inc.external_id;
   const base = heuristicClassify(inc);
 
-  let llm: LLMClassification | null = null;
-  try {
-    llm = await llmClassify(inc);
-  } catch {
-    llm = null;
-  }
+  const { data: llm, error: llm_error } = await llmClassify(inc);
+  const llm_used = !!llm;
 
   const description = llm?.summary || (inc.description_text?.slice(0, 2000) ?? inc.title);
 
-  return {
+  const job: Job = {
     id,
     title_raw: inc.title,
     title_normalized: inc.title.trim(),
@@ -248,4 +254,5 @@ export async function classifyIncoming(inc: IncomingJob): Promise<Job> {
     is_open: true,
     employer_verified: false,
   };
+  return { job, llm_used, llm_error };
 }

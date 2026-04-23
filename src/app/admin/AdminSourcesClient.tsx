@@ -14,6 +14,8 @@ interface FetchReport {
   fetched: number;
   created: number;
   updated: number;
+  llm_classified?: number;
+  llm_errors?: string[];
   errors: string[];
   duration_ms: number;
 }
@@ -133,13 +135,24 @@ export function AdminSourcesClient({ initial }: Props) {
           <div className="font-semibold">
             Fetched {lastReport.fetched} roles · {lastReport.created} new · {lastReport.updated} updated · {(lastReport.duration_ms / 1000).toFixed(1)}s
           </div>
+          {typeof lastReport.llm_classified === "number" && (
+            <div className="text-xs mt-1">
+              Claude classified {lastReport.llm_classified} / {lastReport.fetched} (others used heuristic fallback).
+            </div>
+          )}
+          {(lastReport.llm_errors?.length ?? 0) > 0 && (
+            <details className="mt-1 text-xs">
+              <summary>{lastReport.llm_errors!.length} classifier error(s)</summary>
+              <ul className="mt-1 list-disc pl-5 font-mono text-[11px]">
+                {lastReport.llm_errors!.map((e, i) => <li key={i}>{e}</li>)}
+              </ul>
+            </details>
+          )}
           {lastReport.errors.length > 0 && (
             <details className="mt-1 text-xs">
-              <summary>{lastReport.errors.length} error(s)</summary>
+              <summary>{lastReport.errors.length} fetch error(s)</summary>
               <ul className="mt-1 list-disc pl-5">
-                {lastReport.errors.slice(0, 20).map((e, i) => (
-                  <li key={i}>{e}</li>
-                ))}
+                {lastReport.errors.slice(0, 20).map((e, i) => <li key={i}>{e}</li>)}
               </ul>
             </details>
           )}

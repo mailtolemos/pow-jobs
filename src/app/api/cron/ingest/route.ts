@@ -33,6 +33,8 @@ export async function GET(req: Request) {
         created: 0,
         updated: 0,
         skipped: 0,
+        llm_classified: 0,
+        llm_errors: [],
         errors: [`fatal: ${(e as Error).message}`],
         duration_ms: 0,
       });

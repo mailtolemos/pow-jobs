@@ -33,6 +33,8 @@ export interface IngestResult {
   created: number; // new in our DB
   updated: number; // existing ids refreshed
   skipped: number; // e.g. non-english, or filtered
+  llm_classified: number; // roles successfully classified by Claude
+  llm_errors: string[]; // first few classifier error strings (for debugging)
   errors: string[];
   duration_ms: number;
 }

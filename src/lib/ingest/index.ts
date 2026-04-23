@@ -49,6 +49,8 @@ export async function ingestSource(source: SourceRow): Promise<IngestResult> {
     created: 0,
     updated: 0,
     skipped: 0,
+    llm_classified: 0,
+    llm_errors: [],
     errors: [],
     duration_ms: 0,
   };
@@ -68,10 +70,12 @@ export async function ingestSource(source: SourceRow): Promise<IngestResult> {
   for (const inc of incoming) {
     try {
       const existing = await getJob(inc.external_id);
-      const job = await classifyIncoming(inc);
+      const { job, llm_used, llm_error } = await classifyIncoming(inc);
       await upsertJob(job);
       if (existing) result.updated += 1;
       else result.created += 1;
+      if (llm_used) result.llm_classified += 1;
+      if (llm_error && result.llm_errors.length < 5) result.llm_errors.push(`${inc.title}: ${llm_error}`);
     } catch (e) {
       result.errors.push(`${inc.title}: ${(e as Error).message}`);
     }
