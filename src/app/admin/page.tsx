@@ -1,7 +1,6 @@
 import { listSources, listJobs, listCandidates } from "@/lib/db";
 import { AdminSourcesClient } from "./AdminSourcesClient";
 import { BroadcastPanel } from "./BroadcastPanel";
-import { CronInfoPanel } from "./CronInfoPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -33,9 +32,8 @@ export default async function AdminPage() {
         <Stat label="Distinct domains" value={Object.keys(byDomain).length.toString()} />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4 mb-6">
+      <div className="mb-6">
         <BroadcastPanel />
-        <CronInfoPanel />
       </div>
 
       <AdminSourcesClient initial={sources} />

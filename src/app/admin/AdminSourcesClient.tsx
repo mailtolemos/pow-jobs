@@ -355,7 +355,7 @@ export function AdminSourcesClient({ initial }: Props) {
           </h2>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted hidden md:inline">
-              Auto-fetch runs daily 06:00 UTC via Vercel Cron.
+              Auto-fetch runs hourly via Vercel Cron.
             </span>
             <button
               onClick={handleSeedCryptos}
