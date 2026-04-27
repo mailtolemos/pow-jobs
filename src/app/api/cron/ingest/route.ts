@@ -3,15 +3,27 @@
 // only Vercel's scheduler can invoke it in production.
 
 import { NextResponse } from "next/server";
-import { listSources } from "@/lib/db";
+import { listSources, getSetting } from "@/lib/db";
 import { ingestSource } from "@/lib/ingest";
 import type { IngestResult } from "@/lib/ingest/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-function isAuthorized(req: Request): boolean {
-  const secret = process.env.CRON_SECRET;
+export const CRON_SECRET_KEY = "cron_secret";
+
+async function getEffectiveCronSecret(): Promise<string | null> {
+  try {
+    const fromDb = await getSetting(CRON_SECRET_KEY);
+    if (fromDb && fromDb.trim()) return fromDb.trim();
+  } catch {
+    // settings table may not exist yet
+  }
+  return process.env.CRON_SECRET?.trim() || null;
+}
+
+async function isAuthorized(req: Request): Promise<boolean> {
+  const secret = await getEffectiveCronSecret();
   if (!secret) return true; // no gate configured, allow (dev-friendly)
   const url = new URL(req.url);
   const qs = url.searchParams.get("secret");
@@ -20,7 +32,7 @@ function isAuthorized(req: Request): boolean {
 }
 
 export async function GET(req: Request) {
-  if (!isAuthorized(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!(await isAuthorized(req))) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const sources = (await listSources()).filter((s) => s.active);
   const results: IngestResult[] = [];
   for (const s of sources) {
