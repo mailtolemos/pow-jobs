@@ -113,12 +113,17 @@ export function AdminSourcesClient({ initial }: Props) {
     }
   }
 
-  async function handleSeedCryptos() {
-    if (!confirm("Add the curated list of top crypto career boards (Coinbase, Kraken, Solana, etc.)? Existing sources are skipped. You can delete any individually after.")) return;
+  async function handleSeed(kind: "cryptos" | "finance") {
+    const labels = {
+      cryptos: "top crypto career boards (Coinbase, Kraken, Solana, etc.)",
+      finance: "top finance / trading / VC boards (Two Sigma, Citadel, Stripe, a16z, etc.)",
+    };
+    if (!confirm(`Add the curated list of ${labels[kind]}? Existing sources are skipped. You can delete any individually after.`)) return;
     setBusy(true);
     setErr(null);
     try {
-      const res = await fetch("/api/admin/seed-cryptos", { method: "POST" });
+      const endpoint = kind === "cryptos" ? "/api/admin/seed-cryptos" : "/api/admin/seed-finance";
+      const res = await fetch(endpoint, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       await refresh();
@@ -126,7 +131,7 @@ export function AdminSourcesClient({ initial }: Props) {
         `Added ${data.added} new sources (${data.skipped} already existed). ` +
           `${data.errors.length > 0 ? `${data.errors.length} failed — see console.` : ""}`,
       );
-      if (data.errors.length > 0) console.warn("seed-cryptos errors:", data.errors);
+      if (data.errors.length > 0) console.warn(`seed-${kind} errors:`, data.errors);
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -358,12 +363,20 @@ export function AdminSourcesClient({ initial }: Props) {
               Auto-fetch via external scheduler (configured below) + daily Vercel cron backup.
             </span>
             <button
-              onClick={handleSeedCryptos}
+              onClick={() => handleSeed("cryptos")}
               disabled={busy || fetchingAll}
               className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-50"
               title="Bulk-add top crypto/web3 career boards (Coinbase, Kraken, Solana, etc.)"
             >
               + Top crypto boards
+            </button>
+            <button
+              onClick={() => handleSeed("finance")}
+              disabled={busy || fetchingAll}
+              className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+              title="Bulk-add top finance / trading / VC boards (Two Sigma, Citadel, Stripe, a16z, etc.)"
+            >
+              + Top finance/VC boards
             </button>
             <button
               onClick={handleFetchAll}
