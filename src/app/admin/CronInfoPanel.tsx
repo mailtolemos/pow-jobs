@@ -146,11 +146,16 @@ export function CronInfoPanel() {
 
         <Field label="Schedule">
           <div className="text-xs text-ink/90">
-            Switch to <b>Schedule</b> tab and pick:{" "}
+            Pick{" "}
             <code className="bg-paper border border-line rounded px-1.5 py-0.5 text-[11px] font-mono">
-              Every hour at minute 0
-            </code>
-            {" "}— or use the <b>Common</b> preset &ldquo;Every hour&rdquo;.
+              Every 1 minute
+            </code>{" "}
+            (cron-job.org free tier supports this).
+          </div>
+          <div className="text-[11px] text-muted mt-1">
+            Each tick processes only the source with the oldest{" "}
+            <code>last_checked_at</code>, so 30 sources cycle through every ~30 minutes
+            and every tick stays well under cron-job.org&rsquo;s 30s timeout.
           </div>
         </Field>
 
