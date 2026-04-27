@@ -76,6 +76,20 @@ export async function ingestSource(source: SourceRow): Promise<IngestResult> {
   }
   result.fetched = incoming.length;
 
+  // Sort: roles we haven't seen before go first. So if a big board can't
+  // finish in one call (time budget runs out), the next call resumes with
+  // the leftovers instead of redoing the same head every time.
+  const knownIds = new Set<string>();
+  for (const inc of incoming) {
+    const j = await getJob(inc.external_id);
+    if (j) knownIds.add(inc.external_id);
+  }
+  incoming.sort((a, b) => {
+    const aKnown = knownIds.has(a.external_id) ? 1 : 0;
+    const bKnown = knownIds.has(b.external_id) ? 1 : 0;
+    return aKnown - bKnown; // unknowns (0) first
+  });
+
   // Circuit breaker: if the LLM rate-limits us repeatedly, switch the rest
   // of the batch to heuristic-only. Classify still succeeds (we always write
   // a job row); LLM enrichment is best-effort, not mandatory. This keeps
