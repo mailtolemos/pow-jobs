@@ -34,6 +34,7 @@ export function AdminSourcesClient({ initial }: Props) {
     sources: number;
     totals: { fetched: number; created: number; updated: number; broadcast_sent: number; errors: number };
   } | null>(null);
+  const [batchProgress, setBatchProgress] = useState<Record<string, "pending" | "running" | "done" | "error">>({});
 
   // Add form state
   const [name, setName] = useState("");
@@ -134,7 +135,8 @@ export function AdminSourcesClient({ initial }: Props) {
   }
 
   async function handleFetchAll() {
-    if (sources.filter((s) => s.active).length === 0) {
+    const active = sources.filter((s) => s.active);
+    if (active.length === 0) {
       setErr("No active sources to fetch.");
       return;
     }
@@ -142,11 +144,59 @@ export function AdminSourcesClient({ initial }: Props) {
     setErr(null);
     setLastReport(null);
     setBatchReport(null);
+    // Initialize progress map.
+    const initial: Record<string, "pending" | "running" | "done" | "error"> = {};
+    for (const s of active) initial[s.id] = "pending";
+    setBatchProgress(initial);
+
+    // Run with limited concurrency (2). Each per-source fetch is its own
+    // Vercel function invocation, so we never bump into the 60s cap and a
+    // single slow source can't stall the rest.
+    const CONCURRENCY = 2;
+    const totals = { fetched: 0, created: 0, updated: 0, broadcast_sent: 0, errors: 0 };
+    let cursor = 0;
+    async function worker() {
+      while (true) {
+        const idx = cursor;
+        cursor += 1;
+        if (idx >= active.length) return;
+        const s = active[idx];
+        setBatchProgress((p) => ({ ...p, [s.id]: "running" }));
+        try {
+          const res = await fetch(`/api/admin/sources/${encodeURIComponent(s.id)}/fetch`, {
+            method: "POST",
+          });
+          // If Vercel times out THIS individual call (very unlikely now), we
+          // get HTML back; surface it without crashing the loop.
+          const text = await res.text();
+          let data: unknown;
+          try {
+            data = JSON.parse(text);
+          } catch {
+            throw new Error(`Non-JSON response (${res.status}): ${text.slice(0, 120)}`);
+          }
+          if (!res.ok) {
+            const errMsg = (data as { error?: string }).error || `HTTP ${res.status}`;
+            throw new Error(errMsg);
+          }
+          const r = (data as { result?: FetchReport }).result;
+          if (r) {
+            totals.fetched += r.fetched;
+            totals.created += r.created;
+            totals.updated += r.updated;
+            totals.broadcast_sent += r.broadcast_sent ?? 0;
+            totals.errors += r.errors.length;
+          }
+          setBatchProgress((p) => ({ ...p, [s.id]: "done" }));
+        } catch {
+          totals.errors += 1;
+          setBatchProgress((p) => ({ ...p, [s.id]: "error" }));
+        }
+      }
+    }
     try {
-      const res = await fetch("/api/admin/fetch-all", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-      setBatchReport({ sources: data.sources, totals: data.totals });
+      await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
+      setBatchReport({ sources: active.length, totals });
       await refresh();
     } catch (e) {
       setErr((e as Error).message);
@@ -336,6 +386,7 @@ export function AdminSourcesClient({ initial }: Props) {
                 source={s}
                 busy={busy}
                 fetching={fetchingId === s.id}
+                batchStatus={batchProgress[s.id]}
                 onPatch={handlePatch}
                 onDelete={handleDelete}
                 onFetch={handleFetch}
@@ -352,6 +403,7 @@ function SourceRowEditor({
   source,
   busy,
   fetching,
+  batchStatus,
   onPatch,
   onDelete,
   onFetch,
@@ -359,6 +411,7 @@ function SourceRowEditor({
   source: SourceRow;
   busy: boolean;
   fetching: boolean;
+  batchStatus?: "pending" | "running" | "done" | "error";
   onPatch: (id: string, patch: Partial<SourceRow>) => Promise<void>;
   onDelete: (id: string, label: string) => Promise<void>;
   onFetch: (id: string) => Promise<void>;
@@ -440,6 +493,21 @@ function SourceRowEditor({
               {!source.active && (
                 <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
                   paused
+                </span>
+              )}
+              {batchStatus && (
+                <span
+                  className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                    batchStatus === "done"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : batchStatus === "running"
+                      ? "bg-accent text-white animate-pulse"
+                      : batchStatus === "error"
+                      ? "bg-rose-100 text-rose-800"
+                      : "bg-line/60 text-ink/70"
+                  }`}
+                >
+                  {batchStatus === "running" ? "fetching…" : batchStatus}
                 </span>
               )}
             </div>
