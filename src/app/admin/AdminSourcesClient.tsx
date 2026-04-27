@@ -28,7 +28,12 @@ export function AdminSourcesClient({ initial }: Props) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [fetchingId, setFetchingId] = useState<string | null>(null);
+  const [fetchingAll, setFetchingAll] = useState(false);
   const [lastReport, setLastReport] = useState<FetchReport | null>(null);
+  const [batchReport, setBatchReport] = useState<{
+    sources: number;
+    totals: { fetched: number; created: number; updated: number; broadcast_sent: number; errors: number };
+  } | null>(null);
 
   // Add form state
   const [name, setName] = useState("");
@@ -107,6 +112,49 @@ export function AdminSourcesClient({ initial }: Props) {
     }
   }
 
+  async function handleSeedCryptos() {
+    if (!confirm("Add the curated list of top crypto career boards (Coinbase, Kraken, Solana, etc.)? Existing sources are skipped. You can delete any individually after.")) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await fetch("/api/admin/sources/seed-cryptos", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      await refresh();
+      alert(
+        `Added ${data.added} new sources (${data.skipped} already existed). ` +
+          `${data.errors.length > 0 ? `${data.errors.length} failed — see console.` : ""}`,
+      );
+      if (data.errors.length > 0) console.warn("seed-cryptos errors:", data.errors);
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleFetchAll() {
+    if (sources.filter((s) => s.active).length === 0) {
+      setErr("No active sources to fetch.");
+      return;
+    }
+    setFetchingAll(true);
+    setErr(null);
+    setLastReport(null);
+    setBatchReport(null);
+    try {
+      const res = await fetch("/api/admin/sources/fetch-all", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setBatchReport({ sources: data.sources, totals: data.totals });
+      await refresh();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setFetchingAll(false);
+    }
+  }
+
   async function handleDelete(id: string, label: string) {
     if (!confirm(`Delete source "${label}"? This cannot be undone.`)) return;
     setBusy(true);
@@ -145,15 +193,9 @@ export function AdminSourcesClient({ initial }: Props) {
           )}
           <div className="text-xs mt-1">
             {lastReport.broadcast_configured === false ? (
-              <>
-                📡 Telegram broadcast <b>not configured</b> —
-                set <code className="bg-amber-100 px-1 rounded">TELEGRAM_BROADCAST_CHAT_ID</code>
-                {" "}on Vercel and redeploy to enable.
-              </>
+              <>📡 Telegram broadcast <b>not configured</b> — set the chat ID + bot token in the panel above.</>
             ) : (
-              <>
-                📡 Telegram: sent {lastReport.broadcast_sent ?? 0} / {lastReport.created} new roles.
-              </>
+              <>📡 Telegram: sent {lastReport.broadcast_sent ?? 0} / {lastReport.created} new roles.</>
             )}
           </div>
           {(lastReport.broadcast_errors?.length ?? 0) > 0 && (
@@ -245,10 +287,43 @@ export function AdminSourcesClient({ initial }: Props) {
         </form>
       </section>
 
+      {batchReport && (
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-900">
+          <div className="font-semibold">
+            Fetched all {batchReport.sources} active source{batchReport.sources === 1 ? "" : "s"}
+          </div>
+          <div className="text-xs mt-1">
+            {batchReport.totals.fetched} roles fetched · {batchReport.totals.created} new · {batchReport.totals.updated} updated · {batchReport.totals.broadcast_sent} broadcast · {batchReport.totals.errors} error{batchReport.totals.errors === 1 ? "" : "s"}
+          </div>
+        </div>
+      )}
+
       <section>
-        <h2 className="text-xl font-semibold text-ink mb-3">
-          Catalogue ({sources.length})
-        </h2>
+        <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+          <h2 className="text-xl font-semibold text-ink">
+            Catalogue ({sources.length})
+          </h2>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted hidden md:inline">
+              Auto-fetch runs hourly via Vercel Cron.
+            </span>
+            <button
+              onClick={handleSeedCryptos}
+              disabled={busy || fetchingAll}
+              className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+              title="Bulk-add top crypto/web3 career boards (Coinbase, Kraken, Solana, etc.)"
+            >
+              + Top crypto boards
+            </button>
+            <button
+              onClick={handleFetchAll}
+              disabled={fetchingAll || busy || sources.filter((s) => s.active).length === 0}
+              className="rounded-lg bg-accent text-white px-3 py-1.5 text-sm font-semibold disabled:opacity-50"
+            >
+              {fetchingAll ? "Fetching all…" : "Fetch all now"}
+            </button>
+          </div>
+        </div>
         {sources.length === 0 ? (
           <div className="bg-surface border border-line rounded-xl p-8 text-center text-sm text-muted">
             No sources yet. Add one above to start tracking a job board or RSS feed.

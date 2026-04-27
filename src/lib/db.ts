@@ -853,6 +853,40 @@ export async function deleteUsers(ids: string[]): Promise<number> {
   return rows.length;
 }
 
+// --- De-duplication (cross-source) --------------------------------------
+
+// Find an existing job that's plausibly the same posting. We match on
+// (employer, normalized title, location) so the SAME role posted on the
+// SAME source twice (or republished from a second ATS) is recognized as a
+// duplicate — but the same role advertised in two cities stays separate
+// because the location differs.
+export async function findDuplicateJob(opts: {
+  employer: string;
+  title_normalized: string;
+  location: string;
+  excludeId?: string;
+}): Promise<Job | null> {
+  await ensureSchema();
+  const { employer, title_normalized, location, excludeId } = opts;
+  const rows = (await sql()`
+    SELECT * FROM jobs
+    WHERE lower(employer) = lower(${employer})
+      AND lower(title_normalized) = lower(${title_normalized})
+      AND lower(location) = lower(${location})
+      AND id <> ${excludeId ?? ""}
+    ORDER BY date_last_seen DESC
+    LIMIT 1
+  `) as Row[];
+  return rows[0] ? rowToJob(rows[0]) : null;
+}
+
+// Touch an existing job's date_last_seen so duplicate-skips still record
+// "we saw this role today".
+export async function touchJobLastSeen(id: string): Promise<void> {
+  await ensureSchema();
+  await sql()`UPDATE jobs SET date_last_seen = NOW() WHERE id = ${id}`;
+}
+
 // --- Settings (DB-backed key/value store) -------------------------------
 
 export async function getSetting(key: string): Promise<string | null> {

@@ -7,7 +7,14 @@ import { detectLeverSlug, fetchLever } from "./lever";
 import { fetchHtmlCareerPage } from "./html";
 import { classifyIncoming, classifyHeuristic } from "./classify";
 import type { IncomingJob, IngestResult } from "./types";
-import { getJob, upsertJob, markSourceChecked, type SourceRow } from "../db";
+import {
+  getJob,
+  upsertJob,
+  markSourceChecked,
+  findDuplicateJob,
+  touchJobLastSeen,
+  type SourceRow,
+} from "../db";
 import { broadcastJob, isBroadcastConfigured } from "../telegram";
 
 export type AtsKind = "ashby" | "greenhouse" | "lever" | "html" | "unknown";
@@ -91,6 +98,26 @@ export async function ingestSource(source: SourceRow): Promise<IngestResult> {
       const { job, llm_used, llm_error } = breakerOpen
         ? { ...(await classifyHeuristic(inc)), llm_used: false, llm_error: "skipped: LLM circuit breaker open" }
         : await classifyIncoming(inc);
+
+      // Cross-source dedupe. If we already have a row for the same
+      // (employer, title, location) under a different external_id, treat
+      // this as a re-publish: just bump date_last_seen on the existing row
+      // and skip the insert. Different locations of the same role stay
+      // separate because the location field differs.
+      if (!existing) {
+        const dup = await findDuplicateJob({
+          employer: job.employer,
+          title_normalized: job.title_normalized,
+          location: job.location,
+          excludeId: job.id,
+        });
+        if (dup) {
+          await touchJobLastSeen(dup.id);
+          result.skipped += 1;
+          continue;
+        }
+      }
+
       await upsertJob(job);
       if (existing) {
         result.updated += 1;
