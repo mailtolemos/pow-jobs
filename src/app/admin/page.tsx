@@ -1,5 +1,6 @@
 import { listSources, listJobs, listCandidates } from "@/lib/db";
 import { AdminSourcesClient } from "./AdminSourcesClient";
+import { BroadcastPanel } from "./BroadcastPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,10 @@ export default async function AdminPage() {
         <Stat label="Jobs in DB" value={jobs.length.toString()} />
         <Stat label="Candidates" value={candidates.length.toString()} />
         <Stat label="Distinct domains" value={Object.keys(byDomain).length.toString()} />
+      </div>
+
+      <div className="mb-6">
+        <BroadcastPanel />
       </div>
 
       <AdminSourcesClient initial={sources} />

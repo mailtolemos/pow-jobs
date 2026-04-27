@@ -52,7 +52,7 @@ export async function ingestSource(source: SourceRow): Promise<IngestResult> {
     skipped: 0,
     llm_classified: 0,
     llm_errors: [],
-    broadcast_configured: isBroadcastConfigured(),
+    broadcast_configured: await isBroadcastConfigured(),
     broadcast_sent: 0,
     broadcast_errors: [],
     errors: [],

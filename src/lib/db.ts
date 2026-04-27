@@ -852,3 +852,24 @@ export async function deleteUsers(ids: string[]): Promise<number> {
   const rows = (await sql()`DELETE FROM users WHERE id = ANY(${ids}::text[]) RETURNING id`) as Row[];
   return rows.length;
 }
+
+// --- Settings (DB-backed key/value store) -------------------------------
+
+export async function getSetting(key: string): Promise<string | null> {
+  await ensureSchema();
+  const rows = (await sql()`SELECT value FROM settings WHERE key = ${key}`) as Row[];
+  return rows[0] ? (rows[0].value as string) : null;
+}
+
+export async function setSetting(key: string, value: string): Promise<void> {
+  await ensureSchema();
+  await sql()`
+    INSERT INTO settings (key, value, updated_at) VALUES (${key}, ${value}, NOW())
+    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+  `;
+}
+
+export async function deleteSetting(key: string): Promise<void> {
+  await ensureSchema();
+  await sql()`DELETE FROM settings WHERE key = ${key}`;
+}

@@ -170,4 +170,13 @@ CREATE TABLE IF NOT EXISTS sources (
 
 CREATE INDEX IF NOT EXISTS idx_sources_active ON sources(active);
 CREATE INDEX IF NOT EXISTS idx_sources_kind ON sources(kind);
+
+-- Generic key/value settings store. Currently used to persist the Telegram
+-- broadcast chat id so admins can configure it from the UI without touching
+-- Vercel env vars (which require a redeploy and don't always propagate).
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 `;
