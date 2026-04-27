@@ -117,7 +117,7 @@ export function AdminSourcesClient({ initial }: Props) {
     setBusy(true);
     setErr(null);
     try {
-      const res = await fetch("/api/admin/sources/seed-cryptos", { method: "POST" });
+      const res = await fetch("/api/admin/seed-cryptos", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       await refresh();
@@ -143,7 +143,7 @@ export function AdminSourcesClient({ initial }: Props) {
     setLastReport(null);
     setBatchReport(null);
     try {
-      const res = await fetch("/api/admin/sources/fetch-all", { method: "POST" });
+      const res = await fetch("/api/admin/fetch-all", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       setBatchReport({ sources: data.sources, totals: data.totals });
