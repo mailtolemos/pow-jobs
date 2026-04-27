@@ -32,7 +32,7 @@ function authorized(req: Request): boolean {
 }
 
 export async function POST(req: Request) {
-  if (!isTelegramConfigured()) {
+  if (!(await isTelegramConfigured())) {
     return NextResponse.json({ ok: false, error: "bot not configured" }, { status: 503 });
   }
   if (!authorized(req)) {

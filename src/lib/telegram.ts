@@ -1,9 +1,33 @@
 // Minimal Telegram Bot API wrapper. Only what we need: sendMessage.
+//
+// Both the bot token and the broadcast chat id can be configured in two
+// places, in priority order:
+//   1. settings table  (key = telegram_bot_token / telegram_broadcast_chat_id)
+//   2. process.env     (TELEGRAM_BOT_TOKEN / TELEGRAM_BROADCAST_CHAT_ID)
+// DB-first lets admins set everything from /admin without a redeploy. The
+// settings table sits in the same private Postgres as DATABASE_URL — same
+// trust boundary, no extra exposure.
+
+import { getSetting } from "./db";
 
 const API_BASE = "https://api.telegram.org";
 
-export function isTelegramConfigured(): boolean {
-  return !!process.env.TELEGRAM_BOT_TOKEN;
+export const BOT_TOKEN_KEY = "telegram_bot_token";
+
+export async function getBotToken(): Promise<string | null> {
+  try {
+    const fromDb = await getSetting(BOT_TOKEN_KEY);
+    if (fromDb && fromDb.trim()) return fromDb.trim();
+  } catch {
+    // settings table may not exist on first cold start
+  }
+  const env = process.env.TELEGRAM_BOT_TOKEN?.trim();
+  return env || null;
+}
+
+export async function isTelegramConfigured(): Promise<boolean> {
+  const t = await getBotToken();
+  return !!t;
 }
 
 export async function sendTelegramMessage(
@@ -11,8 +35,8 @@ export async function sendTelegramMessage(
   text: string,
   opts: { parseMode?: "Markdown" | "HTML"; disablePreview?: boolean } = {},
 ): Promise<{ ok: boolean; error?: string }> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return { ok: false, error: "TELEGRAM_BOT_TOKEN not set" };
+  const token = await getBotToken();
+  if (!token) return { ok: false, error: "no bot token configured (set in /admin or env)" };
   try {
     const res = await fetch(`${API_BASE}/bot${token}/sendMessage`, {
       method: "POST",
@@ -52,7 +76,6 @@ export function escapeHTML(s: string): string {
 // Bot token is always env-only since it's a secret.
 
 import type { Job } from "./types";
-import { getSetting } from "./db";
 
 export const BROADCAST_CHAT_ID_KEY = "telegram_broadcast_chat_id";
 
@@ -68,7 +91,8 @@ export async function getBroadcastChatId(): Promise<string | null> {
 }
 
 export async function isBroadcastConfigured(): Promise<boolean> {
-  if (!process.env.TELEGRAM_BOT_TOKEN) return false;
+  const token = await getBotToken();
+  if (!token) return false;
   const chatId = await getBroadcastChatId();
   return !!chatId;
 }
@@ -111,13 +135,10 @@ export function buildBroadcastMessage(job: Job): string {
 // Fire-and-forget broadcast. Never throws. Caller shouldn't block ingest on
 // this — a failed Telegram post must not take down the main upsert path.
 export async function broadcastJob(job: Job): Promise<{ ok: boolean; error?: string }> {
-  if (!process.env.TELEGRAM_BOT_TOKEN) {
-    return { ok: false, error: "TELEGRAM_BOT_TOKEN env var not set" };
-  }
+  const token = await getBotToken();
+  if (!token) return { ok: false, error: "no bot token configured" };
   const chatId = await getBroadcastChatId();
-  if (!chatId) {
-    return { ok: false, error: "no broadcast chat id configured (set in /admin or env)" };
-  }
+  if (!chatId) return { ok: false, error: "no broadcast chat id configured" };
   const text = buildBroadcastMessage(job);
   return sendTelegramMessage(chatId, text, { parseMode: "HTML", disablePreview: false });
 }
@@ -126,13 +147,10 @@ export async function broadcastJob(job: Job): Promise<{ ok: boolean; error?: str
 // "Send test broadcast" button in /admin so admins can verify their setup
 // without having to ingest a fresh job first.
 export async function broadcastTestMessage(): Promise<{ ok: boolean; error?: string; chatId?: string }> {
-  if (!process.env.TELEGRAM_BOT_TOKEN) {
-    return { ok: false, error: "TELEGRAM_BOT_TOKEN env var not set" };
-  }
+  const token = await getBotToken();
+  if (!token) return { ok: false, error: "no bot token configured" };
   const chatId = await getBroadcastChatId();
-  if (!chatId) {
-    return { ok: false, error: "no broadcast chat id configured" };
-  }
+  if (!chatId) return { ok: false, error: "no broadcast chat id configured" };
   const text = `<b>✅ Pablo Jobs broadcast test</b>\nThis chat is wired up. New roles will land here automatically.\n<i>${new Date().toISOString()}</i>`;
   const res = await sendTelegramMessage(chatId, text, { parseMode: "HTML" });
   return { ...res, chatId };
