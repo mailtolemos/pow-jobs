@@ -6,7 +6,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getSetting, setSetting } from "@/lib/db";
-import { CRON_SECRET_KEY } from "@/app/api/cron/ingest/route";
+import { CRON_SECRET_KEY } from "@/lib/cron";
 
 export const dynamic = "force-dynamic";
 

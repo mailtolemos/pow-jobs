@@ -3,24 +3,13 @@
 // only Vercel's scheduler can invoke it in production.
 
 import { NextResponse } from "next/server";
-import { listSources, getSetting } from "@/lib/db";
+import { listSources } from "@/lib/db";
 import { ingestSource } from "@/lib/ingest";
+import { getEffectiveCronSecret } from "@/lib/cron";
 import type { IngestResult } from "@/lib/ingest/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
-
-export const CRON_SECRET_KEY = "cron_secret";
-
-async function getEffectiveCronSecret(): Promise<string | null> {
-  try {
-    const fromDb = await getSetting(CRON_SECRET_KEY);
-    if (fromDb && fromDb.trim()) return fromDb.trim();
-  } catch {
-    // settings table may not exist yet
-  }
-  return process.env.CRON_SECRET?.trim() || null;
-}
 
 async function isAuthorized(req: Request): Promise<boolean> {
   const secret = await getEffectiveCronSecret();
