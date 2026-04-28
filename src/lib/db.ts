@@ -853,6 +853,36 @@ export async function deleteUsers(ids: string[]): Promise<number> {
   return rows.length;
 }
 
+// --- Ingest activity stats (for admin diagnostics) ----------------------
+
+export interface IngestStats {
+  jobs_total: number;
+  jobs_added_24h: number;
+  jobs_added_7d: number;
+  most_recent_job_at: string | null;
+  most_recent_source_check_at: string | null;
+}
+
+export async function getIngestStats(): Promise<IngestStats> {
+  await ensureSchema();
+  const rows = (await sql()`
+    SELECT
+      COUNT(*)::int AS total,
+      COUNT(*) FILTER (WHERE date_last_seen > NOW() - INTERVAL '24 hours')::int AS d1,
+      COUNT(*) FILTER (WHERE date_last_seen > NOW() - INTERVAL '7 days')::int AS d7,
+      MAX(date_last_seen) AS latest_job
+    FROM jobs
+  `) as Row[];
+  const sourceRows = (await sql()`SELECT MAX(last_checked_at) AS latest FROM sources`) as Row[];
+  return {
+    jobs_total: (rows[0]?.total as number) ?? 0,
+    jobs_added_24h: (rows[0]?.d1 as number) ?? 0,
+    jobs_added_7d: (rows[0]?.d7 as number) ?? 0,
+    most_recent_job_at: rows[0]?.latest_job ? toISO(rows[0].latest_job) : null,
+    most_recent_source_check_at: sourceRows[0]?.latest ? toISO(sourceRows[0].latest) : null,
+  };
+}
+
 // --- De-duplication (cross-source) --------------------------------------
 
 // Find an existing job that's plausibly the same posting. We match on

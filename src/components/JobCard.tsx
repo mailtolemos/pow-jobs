@@ -1,4 +1,5 @@
 import type { Job, MatchScore } from "@/lib/types";
+import { employerBoardUrl } from "@/lib/employer-url";
 
 interface Props {
   job: Job;
@@ -30,7 +31,22 @@ export function JobCard({ job, match, onSave, onDismiss }: Props) {
         <div className="min-w-0">
           <h3 className="font-semibold text-ink text-lg truncate">{job.title_raw}</h3>
           <div className="text-sm text-muted mt-0.5">
-            <span className="font-medium">{job.employer}</span>
+            {(() => {
+              const board = employerBoardUrl(job);
+              return board ? (
+                <a
+                  href={board}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`See all roles at ${job.employer}`}
+                  className="font-medium hover:text-accent hover:underline"
+                >
+                  {job.employer}
+                </a>
+              ) : (
+                <span className="font-medium">{job.employer}</span>
+              );
+            })()}
             <span className="text-muted/70"> · </span>
             <span>{job.location}</span>
             <span className="text-muted/70"> · </span>

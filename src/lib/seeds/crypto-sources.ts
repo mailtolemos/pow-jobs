@@ -51,4 +51,33 @@ export const CRYPTO_SEED_SOURCES: SeedSource[] = [
 
   // -------- Lever boards --------
   { name: "Yuga Labs",           url: "https://jobs.lever.co/yugalabs",                   kind: "career-page", notes: "BAYC, ApeCoin ecosystem" },
+
+  // -------- Additional Greenhouse boards --------
+  { name: "Alchemy",             url: "https://boards.greenhouse.io/alchemy",             kind: "career-page", notes: "Web3 dev infrastructure" },
+  { name: "QuickNode",           url: "https://boards.greenhouse.io/quicknode",           kind: "career-page", notes: "Blockchain RPC infra" },
+  { name: "Chainlink Labs",      url: "https://boards.greenhouse.io/chainlinklabs",       kind: "career-page", notes: "Oracle network, LINK" },
+  { name: "0x Labs",             url: "https://boards.greenhouse.io/0x",                  kind: "career-page", notes: "DEX aggregation, Matcha" },
+  { name: "Immutable",           url: "https://boards.greenhouse.io/immutable",           kind: "career-page", notes: "Web3 gaming infrastructure" },
+  { name: "Sky Mavis",           url: "https://boards.greenhouse.io/skymavis",            kind: "career-page", notes: "Axie Infinity, Ronin" },
+  { name: "DFINITY",             url: "https://boards.greenhouse.io/dfinity",             kind: "career-page", notes: "Internet Computer (ICP)" },
+  { name: "Web3 Foundation",     url: "https://boards.greenhouse.io/web3foundation",      kind: "career-page", notes: "Polkadot ecosystem" },
+  { name: "Near Foundation",     url: "https://boards.greenhouse.io/nearfoundation",      kind: "career-page", notes: "NEAR L1" },
+  { name: "Cosmos / Ignite",     url: "https://boards.greenhouse.io/ignite",              kind: "career-page", notes: "Cosmos SDK, ATOM" },
+  { name: "Trust Wallet",        url: "https://boards.greenhouse.io/trustwallet",         kind: "career-page", notes: "Multi-chain wallet" },
+  { name: "Rainbow",             url: "https://jobs.lever.co/rainbow",                    kind: "career-page", notes: "Ethereum wallet" },
+  { name: "Privy",               url: "https://jobs.ashbyhq.com/privy.io",                kind: "career-page", notes: "Embedded wallets / auth" },
+  { name: "Tenderly",            url: "https://boards.greenhouse.io/tenderly",            kind: "career-page", notes: "Web3 dev tools" },
+  { name: "Arweave / Permaweb",  url: "https://jobs.ashbyhq.com/forwardresearch",         kind: "career-page", notes: "Permanent storage / AO" },
+  { name: "Lava Network",        url: "https://jobs.ashbyhq.com/lavanetwork",             kind: "career-page", notes: "Cross-chain RPC" },
+  { name: "Layer Zero",          url: "https://jobs.ashbyhq.com/layerzero",               kind: "career-page", notes: "Cross-chain messaging" },
+  { name: "Wormhole",            url: "https://jobs.ashbyhq.com/wormhole",                kind: "career-page", notes: "Cross-chain protocol" },
+  { name: "Eigen Labs",          url: "https://jobs.ashbyhq.com/eigenlabs",               kind: "career-page", notes: "EigenLayer (restaking)" },
+  { name: "Lido",                url: "https://jobs.lever.co/lido",                       kind: "career-page", notes: "ETH liquid staking" },
+  { name: "MakerDAO / Sky",      url: "https://jobs.lever.co/sky-protocol",               kind: "career-page", notes: "DAI / USDS issuer" },
+  { name: "Aave Companies",      url: "https://jobs.lever.co/aave",                       kind: "career-page", notes: "Aave protocol" },
+  { name: "Crypto.com",          url: "https://boards.greenhouse.io/crypto",              kind: "career-page", notes: "Centralized exchange" },
+  { name: "Bybit",               url: "https://boards.greenhouse.io/bybit",               kind: "career-page", notes: "Centralized exchange" },
+  { name: "OKX",                 url: "https://boards.greenhouse.io/okx",                 kind: "career-page", notes: "Centralized exchange + Web3 wallet" },
+  { name: "Argent",              url: "https://jobs.lever.co/argent",                     kind: "career-page", notes: "Smart wallets, StarkNet" },
+  { name: "Status",              url: "https://jobs.lever.co/status",                     kind: "career-page", notes: "Messaging + wallet, Logos" },
 ];

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Job } from "@/lib/types";
+import { employerBoardUrl } from "@/lib/employer-url";
 
 interface Props {
   initial: Job[];
@@ -348,7 +349,22 @@ function JobRow({ job }: { job: Job }) {
             {job.title_raw}
           </a>
           <div className="text-sm text-muted mt-0.5">
-            <span className="font-medium text-ink/80">{job.employer}</span>
+            {(() => {
+              const board = employerBoardUrl(job);
+              return board ? (
+                <a
+                  href={board}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`See all roles at ${job.employer}`}
+                  className="font-medium text-ink/80 hover:text-accent hover:underline"
+                >
+                  {job.employer}
+                </a>
+              ) : (
+                <span className="font-medium text-ink/80">{job.employer}</span>
+              );
+            })()}
             {" · "}
             {job.location}
             {" · "}
