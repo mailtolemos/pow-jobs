@@ -1,5 +1,6 @@
 import type { Job, MatchScore } from "@/lib/types";
 import { employerBoardUrl } from "@/lib/employer-url";
+import { htmlToSnippet } from "@/lib/html-strip";
 
 interface Props {
   job: Job;
@@ -75,7 +76,7 @@ export function JobCard({ job, match, onSave, onDismiss }: Props) {
         {job.employer_verified && <Chip label="verified" tone="good" />}
       </div>
 
-      <p className="mt-3 text-sm text-muted line-clamp-2">{job.description}</p>
+      <p className="mt-3 text-sm text-muted line-clamp-2">{htmlToSnippet(job.description, 320)}</p>
 
       {match && (
         <div className="mt-3 text-sm text-ink/90 bg-paper border border-line rounded-lg p-3">

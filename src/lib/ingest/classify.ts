@@ -13,6 +13,7 @@ import type {
   Function as JobFunction,
 } from "../types";
 import { chatJSON, isLLMAvailable } from "../llm";
+import { htmlToText, htmlToSnippet } from "../html-strip";
 
 const ALL_DOMAINS: Domain[] = [
   "crypto:defi", "crypto:infra", "crypto:l1", "crypto:l2", "crypto:application",
@@ -183,7 +184,10 @@ export async function classifyHeuristic(inc: IncomingJob): Promise<{ job: Job }>
   const now = new Date().toISOString();
   const id = inc.external_id;
   const base = heuristicClassify(inc);
-  const description = inc.description_text?.slice(0, 2000) ?? inc.title;
+  // Defensive HTML→text in case the upstream sent encoded markup. Limit to
+  // 2k chars so the DB row stays readable.
+  const cleaned = htmlToText(inc.description_text || inc.description_html || "");
+  const description = cleaned ? cleaned.slice(0, 2000) : inc.title;
 
   const job: Job = {
     id,
@@ -232,7 +236,11 @@ export async function classifyIncoming(
   const { data: llm, error: llm_error } = await llmClassify(inc);
   const llm_used = !!llm;
 
-  const description = llm?.summary || (inc.description_text?.slice(0, 2000) ?? inc.title);
+  // LLM summary wins; otherwise fall back to a clean snippet of the
+  // upstream description (HTML stripped, entities decoded).
+  const cleaned = htmlToText(inc.description_text || inc.description_html || "");
+  const fallback = cleaned ? cleaned.slice(0, 2000) : inc.title;
+  const description = llm?.summary?.trim() || fallback;
 
   const job: Job = {
     id,

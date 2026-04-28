@@ -8,6 +8,7 @@
 //   {slug}.ashbyhq.com
 
 import type { IncomingJob } from "./types";
+import { htmlToText } from "../html-strip";
 
 // Safely decode a URL path segment. Path segments can contain %-escapes
 // (e.g. "Solana%20Foundation" for an org slug with a space), and we must
@@ -138,7 +139,15 @@ export async function fetchAshby(sourceUrl: string, employerGuess?: string): Pro
         team: j.team || null,
         employment_type: j.employmentType || null,
         description_html: j.descriptionHtml || null,
-        description_text: j.descriptionPlain || null,
+        // Some Ashby boards return markup in descriptionPlain too — run it
+        // through htmlToText defensively. Falls back to stripping HTML if
+        // plain wasn't provided.
+        description_text:
+          j.descriptionPlain
+            ? htmlToText(j.descriptionPlain)
+            : j.descriptionHtml
+            ? htmlToText(j.descriptionHtml)
+            : null,
         comp_min: comp.min,
         comp_max: comp.max,
         comp_currency: comp.currency,

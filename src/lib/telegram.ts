@@ -76,6 +76,7 @@ export function escapeHTML(s: string): string {
 // Bot token is always env-only since it's a secret.
 
 import type { Job } from "./types";
+import { htmlToSnippet } from "./html-strip";
 
 export const BROADCAST_CHAT_ID_KEY = "telegram_broadcast_chat_id";
 
@@ -121,11 +122,13 @@ export function buildBroadcastMessage(job: Job): string {
   if (job.tech_stack.length > 0) {
     lines.push(`🛠️ ${escapeHTML(job.tech_stack.slice(0, 6).join(", "))}`);
   }
-  const firstLine = (job.description || "").split("\n").find((l) => l.trim().length > 30);
-  if (firstLine) {
-    const trimmed = firstLine.trim().slice(0, 240);
+  // Clean snippet — strips any lingering HTML, decodes entities, trims to
+  // ~280 chars, skips fluffy intros. The store may already hold clean text
+  // for new ingests; this is also a safety net for older rows.
+  const snippet = htmlToSnippet(job.description, 280);
+  if (snippet) {
     lines.push("");
-    lines.push(escapeHTML(trimmed) + (firstLine.length > 240 ? "…" : ""));
+    lines.push(escapeHTML(snippet));
   }
   lines.push("");
   lines.push(`<a href="${escapeHTML(job.source_url)}">Apply →</a>`);

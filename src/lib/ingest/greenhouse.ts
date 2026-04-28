@@ -7,6 +7,7 @@
 //   https://{token}.greenhouse.io/...
 
 import type { IncomingJob } from "./types";
+import { htmlToText } from "../html-strip";
 
 function decodeSeg(seg: string | undefined): string | null {
   if (!seg) return null;
@@ -101,7 +102,7 @@ export async function fetchGreenhouse(sourceUrl: string, employerGuess?: string)
     const loc = j.location?.name || (j.offices ?? []).map((o) => o.name || o.location).filter(Boolean).join("; ") || "Remote";
     const dept = (j.departments ?? []).map((d) => d.name).filter(Boolean).join(", ") || null;
     const html = j.content || "";
-    const text = html ? stripHtml(html) : null;
+    const text = html ? htmlToText(html) : null;
     return {
       external_id: `gh_${safeToken}_${j.id}`,
       source_channel: "greenhouse",

@@ -6,6 +6,7 @@
 //   https://api.lever.co/v0/postings/{slug}
 
 import type { IncomingJob } from "./types";
+import { htmlToText } from "../html-strip";
 
 function decodeSeg(seg: string | undefined): string | null {
   if (!seg) return null;
@@ -89,7 +90,7 @@ export async function fetchLever(sourceUrl: string, employerGuess?: string): Pro
       team: cat.team || null,
       employment_type: cat.commitment || null,
       description_html: j.description || null,
-      description_text: body || null,
+      description_text: body ? htmlToText(body) : (j.description ? htmlToText(j.description) : null),
       comp_min: null,
       comp_max: null,
       comp_currency: null,
