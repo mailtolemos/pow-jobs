@@ -193,7 +193,74 @@ export interface StructuredBreakdown {
   comp: number;
   token: number;
   team: number;
+  title: number; // role-family lexical similarity to candidate's profile
   total: number;
+}
+
+// Role-family keyword groups. Used by titleSimilarity to detect when a job
+// title actually maps to a role family the candidate cares about, not just
+// the coarse `function` enum. Each candidate role family pulls in nearby
+// vocabulary so e.g. a "Head of People" actually matches HR/Talent/People
+// titles, not generic "Operations Manager".
+const ROLE_FAMILY_KEYWORDS: Record<string, string[]> = {
+  engineering: ["engineer", "developer", "swe", "sde", "programmer", "architect", "sre", "devops", "infrastructure", "platform", "backend", "frontend", "fullstack", "full-stack", "mobile"],
+  "quant-research": ["quant", "research", "researcher", "scientist"],
+  trading: ["trader", "trading", "execution", "market making", "market-making", "portfolio manager", "pm"],
+  data: ["data", "analytics", "analyst", "ml", "machine learning", "ai"],
+  design: ["designer", "design", "ux", "ui", "product designer", "brand"],
+  product: ["product manager", "product", "pm", "tpm"],
+  "legal-compliance": ["legal", "counsel", "attorney", "compliance", "policy", "regulatory"],
+  ops: ["people", "talent", "recruit", "hr", "human resources", "operations", "ops", "finance", "accounting", "office"],
+  business: ["sales", "bd ", "business development", "marketing", "growth", "partnerships", "account exec", "ae ", "csm", "customer success"],
+};
+
+const SENIORITY_KEYWORDS = ["junior", "associate", "senior", "staff", "principal", "lead", "head", "director", "vp", "manager", "intern"];
+const STOP_WORDS = new Set(["the", "a", "an", "of", "and", "for", "to", "in", "on", "at", "by", "with", "as", "or", "&", "/", "-"]);
+
+function tokenize(s: string): string[] {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .split(/\s+/)
+    .filter((t) => t && !STOP_WORDS.has(t));
+}
+
+// Role-aware title similarity. Boosts when the job title contains keywords
+// from the candidate's role families AND any of the candidate's own
+// headline/role tokens. Penalises when the title belongs to a totally
+// unrelated role family (e.g. an engineer-flavoured candidate seeing a
+// Sales role).
+function titleSimilarity(candidate: Candidate, job: Job): number {
+  const titleLower = job.title_raw.toLowerCase();
+
+  // 1. Check if the job title contains keywords from the candidate's chosen
+  //    role families. Strong positive signal.
+  const candFamilies = (candidate.functions as string[]).length
+    ? (candidate.functions as string[])
+    : ["engineering"];
+  let familyHit = 0;
+  for (const fam of candFamilies) {
+    const kws = ROLE_FAMILY_KEYWORDS[fam] ?? [];
+    for (const kw of kws) {
+      if (titleLower.includes(kw)) {
+        familyHit = 1;
+        break;
+      }
+    }
+    if (familyHit) break;
+  }
+
+  // 2. Lexical Jaccard between candidate's profile tokens and job title.
+  const profileText = `${candidate.headline} ${candidate.current_role}`;
+  const profileTokens = new Set(tokenize(profileText).filter((t) => !SENIORITY_KEYWORDS.includes(t)));
+  const titleTokens = new Set(tokenize(titleLower).filter((t) => !SENIORITY_KEYWORDS.includes(t)));
+  let overlap = 0;
+  for (const t of titleTokens) if (profileTokens.has(t)) overlap += 1;
+  const denom = Math.max(1, titleTokens.size);
+  const jaccard = overlap / denom;
+
+  // Combine: family hit dominates, jaccard adds nuance.
+  return Math.min(1, 0.7 * familyHit + 0.6 * jaccard);
 }
 
 export function structuredScore(candidate: Candidate, job: Job): StructuredBreakdown {
@@ -204,20 +271,25 @@ export function structuredScore(candidate: Candidate, job: Job): StructuredBreak
   const c = compFit(candidate, job);
   const tok = tokenUpsideFit(candidate, job);
   const q = teamQualitySignal(job);
+  const title = titleSimilarity(candidate, job);
 
-  const wDomain = 0.20 + 0.10 * candidate.weight_domain_fit;
-  const wFunction = 0.10;
-  const wSeniority = 0.10;
-  const wTech = 0.10;
-  const wComp = 0.10 + 0.10 * candidate.weight_comp;
-  const wToken = 0.05 + 0.10 * candidate.weight_token_upside;
-  const wTeam = 0.05 + 0.10 * candidate.weight_team_quality;
-  const sum = wDomain + wFunction + wSeniority + wTech + wComp + wToken + wTeam;
+  // Role/title fit dominates (45%). Domain second (15%). Everything else is
+  // secondary signal. This stops the engine from surfacing unrelated roles
+  // just because the comp band or remote policy lined up.
+  const wTitle = 0.45;
+  const wFunction = 0.15;
+  const wDomain = 0.10 + 0.05 * candidate.weight_domain_fit;
+  const wSeniority = 0.05;
+  const wTech = 0.05;
+  const wComp = 0.05 + 0.05 * candidate.weight_comp;
+  const wToken = 0.02 + 0.05 * candidate.weight_token_upside;
+  const wTeam = 0.02 + 0.05 * candidate.weight_team_quality;
+  const sum = wTitle + wFunction + wDomain + wSeniority + wTech + wComp + wToken + wTeam;
 
   const total =
-    (d * wDomain + f * wFunction + s * wSeniority + t * wTech + c * wComp + tok * wToken + q * wTeam) / sum;
+    (title * wTitle + f * wFunction + d * wDomain + s * wSeniority + t * wTech + c * wComp + tok * wToken + q * wTeam) / sum;
 
-  return { domain: d, function: f, seniority: s, tech: t, comp: c, token: tok, team: q, total };
+  return { domain: d, function: f, seniority: s, tech: t, comp: c, token: tok, team: q, title, total };
 }
 
 // --- Orchestration --------------------------------------------------------
@@ -281,6 +353,8 @@ function buildHeuristicRationale(
     return `Filtered out: ${hard.failed.join(", ")}.`;
   }
   const parts: string[] = [];
+  if (b.title >= 0.7) parts.push(`title matches your role family`);
+  else if (b.title >= 0.4) parts.push(`partial title match`);
   if (b.domain >= 0.9) parts.push(`direct domain match (${job.domain})`);
   else if (b.domain >= 0.5) parts.push(`adjacent domain`);
   if (b.seniority >= 0.75) parts.push(`seniority aligns`);
@@ -288,8 +362,7 @@ function buildHeuristicRationale(
   if (b.comp >= 0.8) parts.push(`comp well above floor`);
   else if (b.comp >= 0.5) parts.push(`comp meets floor`);
   if (b.token >= 0.7 && candidate.weight_token_upside >= 0.6) parts.push(`material token upside`);
-  if (b.team >= 0.8) parts.push(`established employer`);
-  const body = parts.length ? parts.join("; ") : "weak structural fit";
+  const body = parts.length ? parts.join("; ") : "weak role fit";
   return `${body}. Score ${(b.total * 100).toFixed(0)}/100 (heuristic, no LLM).`;
 }
 
@@ -305,12 +378,16 @@ function buildHeuristicRationale(
 const LLM_TOP_K = 6;
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const LLM_BUDGET_MS = 45_000;
+// Bumped whenever the scoring algo changes meaningfully. Cached matches with
+// computed_at before this cutoff are ignored, forcing a fresh structured
+// score under the new algo without anyone having to clear the matches table.
+const ALGO_CUTOFF = Date.parse("2026-04-23T11:00:00Z");
 
 function isCacheFresh(cached: MatchScore, job: Job): boolean {
   const cachedAt = Date.parse(cached.computed_at);
   if (Number.isNaN(cachedAt)) return false;
+  if (cachedAt < ALGO_CUTOFF) return false; // pre-revamp scoring, ignore
   if (Date.now() - cachedAt > CACHE_TTL_MS) return false;
-  // Invalidate if job has been updated since we last scored it.
   const seenAt = Date.parse(job.date_last_seen);
   if (!Number.isNaN(seenAt) && seenAt > cachedAt) return false;
   return true;
