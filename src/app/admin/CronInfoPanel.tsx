@@ -148,14 +148,16 @@ export function CronInfoPanel() {
           <div className="text-xs text-ink/90">
             Pick{" "}
             <code className="bg-paper border border-line rounded px-1.5 py-0.5 text-[11px] font-mono">
-              Every 1 minute
+              Every 2 minutes
             </code>{" "}
             (cron-job.org free tier supports this).
           </div>
           <div className="text-[11px] text-muted mt-1">
-            Each tick processes only the source with the oldest{" "}
-            <code>last_checked_at</code>, so 30 sources cycle through every ~30 minutes
-            and every tick stays well under cron-job.org&rsquo;s 30s timeout.
+            Each tick processes the single source with the oldest{" "}
+            <code>last_checked_at</code> and claims it up-front to prevent
+            overlapping ticks from double-processing. With 60 sources, you cycle
+            through every ~2 hours — fast enough for fresh roles, slow enough
+            to comfortably stay under Groq rate limits.
           </div>
         </Field>
 

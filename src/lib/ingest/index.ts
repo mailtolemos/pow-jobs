@@ -66,6 +66,14 @@ export async function ingestSource(source: SourceRow): Promise<IngestResult> {
     duration_ms: 0,
   };
 
+  // Claim the source by bumping its last_checked_at FIRST. The round-robin
+  // picker uses last_checked_at to choose the oldest, so claiming up-front
+  // means a subsequent overlapping cron tick will pick a different source
+  // instead of double-processing this one. The fetch itself is still
+  // idempotent (jobs keyed by external_id), so a race is harmless — but
+  // claiming early prevents wasted LLM/network calls.
+  await markSourceChecked(source.id).catch(() => undefined);
+
   let incoming: IncomingJob[] = [];
   try {
     incoming = await fetchIncoming(source);
