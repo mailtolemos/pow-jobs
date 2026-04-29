@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { CompanyCarousel } from "@/components/CompanyCarousel";
+import { TelegramCTA } from "@/components/TelegramCTA";
 
 export default function LandingPage() {
   return (
     <>
       {/* HERO ----------------------------------------------------------- */}
       <section className="border-b border-line">
-        <div className="max-w-5xl mx-auto px-6 pt-16 pb-20 md:pt-24 md:pb-28 grid md:grid-cols-[minmax(0,1fr)_auto] gap-10 md:gap-12 items-center">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 pt-12 pb-14 md:pt-24 md:pb-28 grid md:grid-cols-[minmax(0,1fr)_auto] gap-10 md:gap-12 items-center">
           <div>
             <div className="text-[11px] uppercase tracking-[0.22em] text-accent font-semibold mb-4">
               Find your next move.
@@ -35,6 +36,7 @@ export default function LandingPage() {
               >
                 Post a job
               </Link>
+              <TelegramCTA variant="button" className="px-5 py-3" label="Join our Telegram" />
             </div>
 
             <div className="mt-12 text-xs text-muted flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -66,8 +68,13 @@ export default function LandingPage() {
       {/* COMPANY LOGO CAROUSEL ------------------------------------------- */}
       <CompanyCarousel />
 
+      {/* TELEGRAM BANNER ------------------------------------------------- */}
+      <section className="max-w-5xl mx-auto px-4 md:px-6 pt-10 md:pt-14">
+        <TelegramCTA variant="banner" />
+      </section>
+
       {/* VALUE PROPS ---------------------------------------------------- */}
-      <section className="max-w-5xl mx-auto px-6 py-16 md:py-20">
+      <section className="max-w-5xl mx-auto px-4 md:px-6 py-12 md:py-20">
         <div className="grid md:grid-cols-3 gap-8 md:gap-10">
           <ValueProp
             icon="⚡"
@@ -89,7 +96,7 @@ export default function LandingPage() {
 
       {/* FOR CANDIDATES ------------------------------------------------- */}
       <section className="border-t border-line bg-surface">
-        <div className="max-w-5xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-10 items-start">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 py-14 md:py-20 grid md:grid-cols-2 gap-10 items-start">
           <div>
             <div className="text-[11px] uppercase tracking-[0.2em] text-accent font-semibold mb-3">
               For candidates
@@ -131,7 +138,7 @@ export default function LandingPage() {
 
       {/* FOR COMPANIES -------------------------------------------------- */}
       <section className="border-t border-line">
-        <div className="max-w-5xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-10 items-start">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 py-14 md:py-20 grid md:grid-cols-2 gap-10 items-start">
           <div className="md:order-2">
             <div className="text-[11px] uppercase tracking-[0.2em] text-accent font-semibold mb-3">
               For companies
@@ -170,12 +177,12 @@ export default function LandingPage() {
 
       {/* FOOTER --------------------------------------------------------- */}
       <footer className="border-t border-line">
-        <div className="max-w-5xl mx-auto px-6 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-sm text-muted">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-sm text-muted">
           <div className="flex items-center gap-2">
             <Logo size={22} />
           </div>
           <div className="text-xs">© {new Date().getFullYear()} ProWo · Proof of Work</div>
-          <div className="flex gap-4 text-xs">
+          <div className="flex gap-4 text-xs flex-wrap">
             <Link href="/jobs" className="hover:text-ink transition">
               Browse
             </Link>
@@ -185,6 +192,7 @@ export default function LandingPage() {
             <Link href="/signin" className="hover:text-ink transition">
               Sign in
             </Link>
+            <TelegramCTA variant="link" />
           </div>
         </div>
       </footer>

@@ -41,7 +41,7 @@ const STEPS = [
 
 export default function OnboardingPage() {
   return (
-    <div className="max-w-3xl mx-auto px-6 py-16">
+    <div className="max-w-3xl mx-auto px-4 md:px-6 py-16">
       <div className="text-[11px] uppercase tracking-[0.2em] text-muted mb-3">Onboarding walkthrough</div>
       <h1 className="text-4xl font-bold text-ink">Six steps. No forms for forms' sake.</h1>
       <p className="text-muted mt-3 leading-relaxed">

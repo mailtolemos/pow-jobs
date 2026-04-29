@@ -8,6 +8,7 @@ import { getSessionUser } from "@/lib/auth";
 import { sql, ensureSchema } from "@/lib/db";
 import type { Job } from "@/lib/types";
 import { PostJobClient } from "./PostJobClient";
+import { TelegramCTA } from "@/components/TelegramCTA";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +56,7 @@ export default async function PostJobPage() {
   const mine = await listMySubmissions(user.id);
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-10">
+    <div className="max-w-3xl mx-auto px-4 md:px-6 py-10">
       <div className="mb-8">
         <div className="text-[11px] uppercase tracking-[0.2em] text-accent font-semibold mb-2">
           Post a job
@@ -86,6 +87,16 @@ export default async function PostJobPage() {
       )}
 
       <PostJobClient submitterEmail={user.email} />
+
+      {/* Once a role is approved, every candidate in the broadcast channel
+          sees it instantly — surface the channel here so submitters know
+          where their listing will land. */}
+      <div className="mt-8">
+        <TelegramCTA
+          variant="banner"
+          label="Approved roles broadcast in real time."
+        />
+      </div>
 
       {mine.length > 0 && (
         <div className="mt-12">

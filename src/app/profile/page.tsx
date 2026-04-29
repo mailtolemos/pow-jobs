@@ -26,7 +26,7 @@ export default async function ProfilePage() {
   const telegramBotUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "";
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-10">
+    <div className="max-w-4xl mx-auto px-4 md:px-6 py-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-ink">Your profile</h1>
         <p className="text-muted mt-1 text-sm">

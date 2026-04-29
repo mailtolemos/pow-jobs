@@ -30,7 +30,7 @@ export default async function AdminPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
+    <div className="max-w-5xl mx-auto px-4 md:px-6 py-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-ink">Sources & job boards</h1>
         <p className="text-muted mt-1 text-sm">

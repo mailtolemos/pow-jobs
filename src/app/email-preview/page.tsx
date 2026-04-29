@@ -16,7 +16,7 @@ export default async function EmailPreviewPage({ searchParams }: Props) {
 
   if (!activeId) {
     return (
-      <div className="max-w-3xl mx-auto px-6 py-16">
+      <div className="max-w-3xl mx-auto px-4 md:px-6 py-16">
         <div className="text-muted">No candidates in the database — run <code>npm run seed</code>.</div>
       </div>
     );
@@ -25,7 +25,7 @@ export default async function EmailPreviewPage({ searchParams }: Props) {
   const candidate = await getCandidate(activeId);
   if (!candidate) {
     return (
-      <div className="max-w-3xl mx-auto px-6 py-16">
+      <div className="max-w-3xl mx-auto px-4 md:px-6 py-16">
         <div className="text-muted">Candidate not found.</div>
       </div>
     );
@@ -52,7 +52,7 @@ export default async function EmailPreviewPage({ searchParams }: Props) {
   });
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-10">
+    <div className="max-w-4xl mx-auto px-4 md:px-6 py-10">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-ink">Weekly digest preview</h1>
         <p className="text-muted mt-1">Rendered HTML of what the candidate actually receives.</p>

@@ -27,6 +27,9 @@ export function JobsBrowseClient({ initial }: Props) {
   const [maxSeniority, setMaxSeniority] = useState(6);
   const [includeMgmt, setIncludeMgmt] = useState(true);
   const [compFloor, setCompFloor] = useState(0);
+  // Mobile-only collapse for the filter panel — defaults closed because
+  // the chip groups would otherwise eat the whole first viewport.
+  const [showFiltersMobile, setShowFiltersMobile] = useState(false);
 
   // Derive facet values from the current dataset
   const facets = useMemo(() => {
@@ -112,9 +115,12 @@ export function JobsBrowseClient({ initial }: Props) {
 
   return (
     <div className="grid md:grid-cols-[320px_1fr] gap-6">
-      {/* -------- Filter sidebar -------- */}
-      <aside className="bg-surface border border-line rounded-xl p-4 h-fit md:sticky md:top-6 space-y-5">
-        <div className="flex items-center justify-between">
+      {/* -------- Filter sidebar --------
+          On mobile we hide the body until the user taps "Show filters", so
+          the 8 sections don't push the results below the fold. On md+ the
+          body is always visible (the toggle button is hidden). */}
+      <aside className="bg-surface border border-line rounded-xl p-4 h-fit md:sticky md:top-6 md:space-y-5">
+        <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
             Filters
             {activeCount > 0 && (
@@ -123,12 +129,22 @@ export function JobsBrowseClient({ initial }: Props) {
               </span>
             )}
           </h2>
-          {activeCount > 0 && (
-            <button onClick={resetAll} className="text-xs text-muted underline hover:text-ink">
-              Reset
+          <div className="flex items-center gap-3">
+            {activeCount > 0 && (
+              <button onClick={resetAll} className="text-xs text-muted underline hover:text-ink">
+                Reset
+              </button>
+            )}
+            <button
+              onClick={() => setShowFiltersMobile((v) => !v)}
+              className="md:hidden text-xs font-semibold text-accent underline"
+              aria-expanded={showFiltersMobile}
+            >
+              {showFiltersMobile ? "Hide" : `Show (${filtered.length} match)`}
             </button>
-          )}
+          </div>
         </div>
+        <div className={`${showFiltersMobile ? "block" : "hidden"} md:block space-y-5 mt-4 md:mt-0`}>
 
         <Field label="Search">
           <input
@@ -251,6 +267,7 @@ export function JobsBrowseClient({ initial }: Props) {
             ))}
           </select>
         </Field>
+        </div>
       </aside>
 
       {/* -------- Results -------- */}

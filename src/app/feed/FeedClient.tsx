@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Candidate, Job, MatchScore } from "@/lib/types";
 import { JobCard } from "@/components/JobCard";
+import { TelegramCTA } from "@/components/TelegramCTA";
 import {
   FeedFilters,
   DEFAULT_FILTERS,
@@ -98,7 +99,7 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
   }, [mode, activeDemoId, useLLM, applyFloor, viewingCandidate]);
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
+    <div className="max-w-5xl mx-auto px-4 md:px-6 py-10">
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div className="min-w-0">
           <h1 className="text-3xl font-bold text-ink">Your feed</h1>
@@ -108,12 +109,15 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
               : "Live matching against a demo persona — sign in to see matches for your real profile."}
           </p>
         </div>
-        <Link
-          href="/jobs"
-          className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-accent text-white px-4 py-2 text-sm font-semibold hover:bg-accent2 transition shadow-soft"
-        >
-          Check all jobs →
-        </Link>
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <TelegramCTA variant="button" className="px-3 py-2 text-xs sm:text-sm" />
+          <Link
+            href="/jobs"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent text-white px-4 py-2 text-sm font-semibold hover:bg-accent2 transition shadow-soft"
+          >
+            Check all jobs →
+          </Link>
+        </div>
       </div>
 
       {signedInAs && profileIncomplete && mode === "me" && (

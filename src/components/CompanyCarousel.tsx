@@ -96,9 +96,16 @@ export function CompanyCarousel() {
 
   return (
     <section className="border-t border-b border-line bg-surface/40">
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        <div className="text-[11px] uppercase tracking-[0.22em] text-muted font-semibold mb-6 text-center">
-          Trusted across tech, crypto &amp; finance
+      <div className="max-w-5xl mx-auto px-6 pt-10 pb-6 text-center">
+        {/* Eyebrow: clarifies these are sample employers we surface roles
+            from — NOT a "trusted by" claim, since we don't have endorsement
+            from any of them. The headline below carries the aspirational
+            framing without overclaiming. */}
+        <div className="text-[11px] uppercase tracking-[0.22em] text-muted font-semibold mb-2">
+          A sample of who&rsquo;s hiring on ProWo
+        </div>
+        <div className="text-xl md:text-2xl font-bold text-ink tracking-tight">
+          Land a job at the world&rsquo;s most exciting teams.
         </div>
       </div>
       {/* Edge fade so logos drift in/out instead of clipping hard at the page edge. */}

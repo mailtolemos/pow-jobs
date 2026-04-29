@@ -162,7 +162,7 @@ export function AdminUsersClient({ initial, meId, ownerEmails }: Props) {
         </div>
       )}
 
-      <div className="bg-surface border border-line rounded-xl p-4 grid grid-cols-1 md:grid-cols-6 gap-3">
+      <div className="bg-surface border border-line rounded-xl p-3 md:p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3">
         <input
           placeholder="Search email / display name / headline…"
           value={q}
@@ -210,8 +210,8 @@ export function AdminUsersClient({ initial, meId, ownerEmails }: Props) {
         </div>
       </div>
 
-      <div className="bg-surface border border-line rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-surface border border-line rounded-xl overflow-x-auto">
+        <table className="w-full min-w-[820px] text-sm">
           <thead className="bg-paper text-muted">
             <tr>
               <th className="px-3 py-2 text-left w-8">
