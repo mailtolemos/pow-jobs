@@ -1,19 +1,31 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, Suspense, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+
+type AccountType = "candidate" | "company";
 
 function SigninInner() {
   const params = useSearchParams();
-  const router = useRouter();
   const error = params.get("error");
-  const redirectTo = params.get("next") || "/profile";
+  const initialAs = (params.get("as") as AccountType | null) ?? null;
+  const requestedNext = params.get("next");
 
+  const [accountType, setAccountType] = useState<AccountType>(
+    initialAs === "company" ? "company" : "candidate",
+  );
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [devUrl, setDevUrl] = useState<string | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
+
+  // Sync the toggle if the URL param changes (e.g. user navigates between
+  // /signin and /signin?as=company without a full reload).
+  useEffect(() => {
+    if (initialAs === "company") setAccountType("company");
+    else if (initialAs === "candidate") setAccountType("candidate");
+  }, [initialAs]);
 
   const errorText =
     error === "expired"
@@ -21,6 +33,14 @@ function SigninInner() {
       : error === "missing"
       ? "Sign-in link was invalid. Request a new one below."
       : errMsg;
+
+  // Companies always land on /post-job. Candidates honour `?next=` if it was
+  // passed (eg from the feed) — otherwise default to /profile so they can fill
+  // out their preferences before seeing matches.
+  const redirectTo =
+    accountType === "company"
+      ? "/post-job"
+      : requestedNext || "/profile";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,7 +51,7 @@ function SigninInner() {
       const res = await fetch("/api/auth/signin", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, redirectTo }),
+        body: JSON.stringify({ email, redirectTo, accountType }),
       });
       const json = (await res.json()) as { ok: boolean; error?: string; devPreviewUrl?: string };
       if (!json.ok) {
@@ -65,8 +85,31 @@ function SigninInner() {
 
       {status !== "sent" ? (
         <form onSubmit={handleSubmit} className="bg-surface border border-line rounded-xl p-6 space-y-4">
+          {/* Account-type picker so companies land in the post-job flow only */}
+          <div>
+            <span className="block text-xs uppercase tracking-wider text-muted mb-2">
+              I&rsquo;m here to&hellip;
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              <AccountChoice
+                active={accountType === "candidate"}
+                onClick={() => setAccountType("candidate")}
+                title="Find a job"
+                subtitle="Get matched to roles in tech, crypto &amp; finance."
+              />
+              <AccountChoice
+                active={accountType === "company"}
+                onClick={() => setAccountType("company")}
+                title="Hire"
+                subtitle="Submit a role for review and reach the right candidates."
+              />
+            </div>
+          </div>
+
           <label className="block">
-            <span className="block text-xs uppercase tracking-wider text-muted mb-1">Email</span>
+            <span className="block text-xs uppercase tracking-wider text-muted mb-1">
+              {accountType === "company" ? "Work email" : "Email"}
+            </span>
             <input
               type="email"
               required
@@ -74,8 +117,8 @@ function SigninInner() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full rounded-lg border border-line px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent/40"
+              placeholder={accountType === "company" ? "you@company.com" : "you@example.com"}
+              className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-accent/40"
             />
           </label>
           <button
@@ -86,7 +129,9 @@ function SigninInner() {
             {status === "sending" ? "Sending link…" : "Email me a sign-in link"}
           </button>
           <p className="text-xs text-muted text-center">
-            We never share your email. By signing in you agree to receive weekly job digests (you can turn them off any time).
+            {accountType === "company"
+              ? "Company accounts only see the Post a Job page. Submitted roles are reviewed before going live."
+              : "We never share your email. By signing in you agree to receive job digests (toggle off any time)."}
           </p>
         </form>
       ) : (
@@ -121,6 +166,38 @@ function SigninInner() {
         </Link>
       </div>
     </div>
+  );
+}
+
+function AccountChoice({
+  active,
+  onClick,
+  title,
+  subtitle,
+}: {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-left rounded-lg border px-3 py-3 transition ${
+        active
+          ? "border-accent bg-accent/10 text-ink"
+          : "border-line bg-paper text-muted hover:border-accent/50 hover:text-ink"
+      }`}
+    >
+      <div className="text-sm font-semibold">{title}</div>
+      <div
+        className="text-[11px] mt-1 leading-snug"
+        // subtitle is a static literal so dangerouslySetInnerHTML is safe here
+        // (decoding the &amp; without leaking React text-node escapes).
+        dangerouslySetInnerHTML={{ __html: subtitle }}
+      />
+    </button>
   );
 }
 

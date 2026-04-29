@@ -1,4 +1,4 @@
-// POST /api/auth/signin  { email, redirectTo? }
+// POST /api/auth/signin  { email, redirectTo?, accountType? }
 // Creates a magic-link token, emails it, returns { ok, devPreviewUrl? }.
 // In dev mode (no RESEND_API_KEY) the response includes the magic URL so the
 // developer can click it directly — production behavior requires clicking email.
@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 const BodySchema = z.object({
   email: z.string().email().max(254),
   redirectTo: z.string().startsWith("/").optional(),
+  accountType: z.enum(["candidate", "company"]).optional(),
 });
 
 export async function POST(req: Request) {
@@ -21,9 +22,14 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ ok: false, error: "invalid email" }, { status: 400 });
   }
-  const { email, redirectTo } = parsed.data;
+  const { email, redirectTo, accountType } = parsed.data;
 
-  const token = await createMagicLinkToken(email, redirectTo ?? null, 15);
+  const token = await createMagicLinkToken(
+    email,
+    redirectTo ?? null,
+    15,
+    accountType ?? null,
+  );
   const url = `${getAppUrl()}/api/auth/verify?token=${encodeURIComponent(token)}`;
 
   const { subject, html, text } = renderMagicLinkEmail({ url, email });

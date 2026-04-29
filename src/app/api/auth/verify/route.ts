@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import {
   consumeMagicLinkToken,
   upsertUserByEmail,
+  setUserAccountType,
   getCandidateByUserId,
   createEmptyCandidateForUser,
 } from "@/lib/db";
@@ -25,18 +26,38 @@ export async function GET(req: Request) {
     return NextResponse.redirect(new URL("/signin?error=expired", url), 302);
   }
 
-  const user = await upsertUserByEmail(consumed.email);
+  // Brand-new sign-ups land with the account_type they picked at the form.
+  const user = await upsertUserByEmail(consumed.email, {
+    accountType: consumed.account_type ?? undefined,
+  });
 
-  // Ensure a candidate profile exists.
-  let candidate = await getCandidateByUserId(user.id);
-  if (!candidate) {
+  // If an existing candidate-typed account signs in via the "I'm hiring" form,
+  // flip their account type to company so the rest of the UI gates correctly.
+  if (
+    consumed.account_type &&
+    consumed.account_type !== user.account_type
+  ) {
+    await setUserAccountType(user.id, consumed.account_type);
+    user.account_type = consumed.account_type;
+  }
+
+  const isCompany = user.account_type === "company";
+
+  // Candidates always get a candidate profile stub for /feed.
+  // Company accounts skip this step — they only see /post-job.
+  let candidate = isCompany ? null : await getCandidateByUserId(user.id);
+  if (!isCompany && !candidate) {
     candidate = await createEmptyCandidateForUser(user.id, user.email);
   }
 
   const jwt = await signSessionToken({ uid: user.id, email: user.email });
   const { name, options } = sessionCookieOptions();
 
-  const redirectTo = consumed.redirect_to || (candidate.headline ? "/feed" : "/profile");
+  // Companies always land on /post-job. Candidates resume their requested
+  // redirect, or go to /profile (when their headline is still empty) / /feed.
+  const redirectTo = isCompany
+    ? "/post-job"
+    : consumed.redirect_to || (candidate?.headline ? "/feed" : "/profile");
   const res = NextResponse.redirect(new URL(redirectTo, url), 302);
   res.cookies.set(name, jwt, options);
   return res;

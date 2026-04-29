@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getCandidateByUserId, listCandidates, getCandidateExtras } from "@/lib/db";
 import { FeedClient } from "./FeedClient";
@@ -6,6 +7,11 @@ export const dynamic = "force-dynamic";
 
 export default async function FeedPage() {
   const user = await getSessionUser();
+  // Company accounts have no candidate profile and the feed is meaningless to
+  // them — funnel them to the post-job page they actually use.
+  if (user?.account_type === "company") {
+    redirect("/post-job");
+  }
   const myCandidate = user ? await getCandidateByUserId(user.id) : null;
   const myExtras = myCandidate ? await getCandidateExtras(myCandidate.id) : null;
   // Only surface demo personas to signed-out visitors. Signed-in users should

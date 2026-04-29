@@ -84,6 +84,11 @@ export interface Job {
   date_last_seen: string; // ISO
   is_open: boolean;
   employer_verified: boolean;
+  // Moderation: scraped/seeded rows are 'approved' by default. Company-submitted
+  // rows enter as 'pending' and only show up publicly once an admin flips them.
+  status?: "approved" | "pending" | "rejected";
+  submitted_by_user_id?: string | null;
+  submitted_at?: string | null;
 }
 
 export interface Candidate {

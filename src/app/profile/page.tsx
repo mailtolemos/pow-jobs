@@ -8,6 +8,8 @@ export const dynamic = "force-dynamic";
 export default async function ProfilePage() {
   const user = await getSessionUser();
   if (!user) redirect("/signin?next=/profile");
+  // Company accounts only see /post-job — no candidate profile to edit.
+  if (user.account_type === "company") redirect("/post-job");
 
   const candidate = await getCandidateByUserId(user.id);
   if (!candidate) redirect("/signin?error=missing");

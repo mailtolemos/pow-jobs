@@ -12,11 +12,12 @@ export default function LandingPage() {
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-ink leading-[1.05] tracking-tight max-w-3xl">
             Find your next job in{" "}
-            <span className="text-accent">crypto & finance</span>.
+            <span className="text-accent">tech, crypto &amp; finance</span>.
           </h1>
           <p className="text-lg text-muted mt-6 leading-relaxed max-w-2xl">
-            ProWo (Proof of Work) connects top talent with the fastest-growing companies in crypto, fintech, and global finance.
-            No spam. No outdated listings. Just real opportunities from real companies.
+            ProWo (Proof of Work) connects top talent with the fastest-growing companies in tech, crypto,
+            fintech, and global finance. No spam. No outdated listings. Just real opportunities from real
+            companies.
           </p>
 
           <div className="mt-10 flex flex-wrap gap-3">
@@ -27,7 +28,7 @@ export default function LandingPage() {
               Browse jobs →
             </Link>
             <Link
-              href="/onboarding"
+              href="/post-job"
               className="px-5 py-3 bg-surface border border-line text-ink font-semibold rounded-lg hover:border-accent transition"
             >
               Post a job
@@ -113,25 +114,25 @@ export default function LandingPage() {
               For companies
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-ink tracking-tight leading-tight">
-              Hire people who already speak crypto.
+              Hire people who already speak the language.
             </h2>
             <p className="text-muted mt-5 leading-relaxed">
-              Reach a targeted pool of candidates who understand the space &mdash; no noise, just signal.
-              Plug your Ashby, Greenhouse, or Lever board straight in. Every role gets classified,
-              ranked against real candidate profiles, and only surfaces for people it actually fits.
+              Reach a targeted pool of candidates who understand tech, crypto, and finance &mdash; no noise,
+              just signal. Submit a role in two minutes; we classify it, rank it against real candidate
+              profiles, and only surface it to people it actually fits.
             </p>
             <div className="mt-6 flex gap-3">
               <Link
-                href="/onboarding"
+                href="/post-job"
                 className="px-4 py-2 bg-accent text-white font-semibold rounded-lg hover:bg-accent2 transition text-sm"
               >
                 Post a job
               </Link>
               <Link
-                href="/admin"
+                href="/signin?as=company&next=/post-job"
                 className="px-4 py-2 border border-line text-ink font-semibold rounded-lg hover:border-accent transition text-sm"
               >
-                Connect your board
+                Create company account
               </Link>
             </div>
           </div>
@@ -155,7 +156,7 @@ export default function LandingPage() {
             <Link href="/feed" className="hover:text-ink transition">
               Browse
             </Link>
-            <Link href="/onboarding" className="hover:text-ink transition">
+            <Link href="/post-job" className="hover:text-ink transition">
               Post a job
             </Link>
             <Link href="/signin" className="hover:text-ink transition">

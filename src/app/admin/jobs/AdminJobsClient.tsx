@@ -7,7 +7,7 @@ interface Props {
   initial: Job[];
 }
 
-const STATUS_OPTIONS = ["all", "open", "closed"] as const;
+const STATUS_OPTIONS = ["all", "pending", "approved", "rejected", "open", "closed"] as const;
 type Status = (typeof STATUS_OPTIONS)[number];
 
 export function AdminJobsClient({ initial }: Props) {
@@ -15,13 +15,17 @@ export function AdminJobsClient({ initial }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   // Filters
   const [q, setQ] = useState("");
   const [employerFilter, setEmployerFilter] = useState("");
   const [domainFilter, setDomainFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
-  const [status, setStatus] = useState<Status>("all");
+  // Default to "pending" so the moderation queue is what an admin sees first.
+  const [status, setStatus] = useState<Status>(
+    initial.some((j) => j.status === "pending") ? "pending" : "all",
+  );
 
   // Manual add form
   const [showAdd, setShowAdd] = useState(false);
@@ -42,14 +46,23 @@ export function AdminJobsClient({ initial }: Props) {
     };
   }, [jobs]);
 
+  const pendingCount = useMemo(
+    () => jobs.filter((j) => (j.status ?? "approved") === "pending").length,
+    [jobs],
+  );
+
   const filtered = useMemo(() => {
     const qLower = q.trim().toLowerCase();
     return jobs.filter((j) => {
+      const jStatus = j.status ?? "approved";
       if (employerFilter && j.employer !== employerFilter) return false;
       if (domainFilter && j.domain !== domainFilter) return false;
       if (sourceFilter && j.source_channel !== sourceFilter) return false;
       if (status === "open" && !j.is_open) return false;
       if (status === "closed" && j.is_open) return false;
+      if (status === "pending" && jStatus !== "pending") return false;
+      if (status === "approved" && jStatus !== "approved") return false;
+      if (status === "rejected" && jStatus !== "rejected") return false;
       if (qLower) {
         const blob = `${j.title_raw} ${j.employer} ${j.description} ${j.location}`.toLowerCase();
         if (!blob.includes(qLower)) return false;
@@ -124,11 +137,56 @@ export function AdminJobsClient({ initial }: Props) {
     }
   }
 
+  async function handleSetStatus(id: string, next: "approved" | "rejected") {
+    setBusy(true);
+    setErr(null);
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/admin/jobs/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status: next }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || `HTTP ${res.status}`);
+      }
+      // Optimistic update so the row leaves the pending tab immediately.
+      setJobs((rows) =>
+        rows.map((r) => (r.id === id ? { ...r, status: next } : r)),
+      );
+      setNotice(next === "approved" ? "Job approved and now public." : "Job rejected.");
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       {err && (
         <div className="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm text-rose-900">
           {err}
+        </div>
+      )}
+      {notice && (
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-900">
+          {notice}
+        </div>
+      )}
+
+      {pendingCount > 0 && status !== "pending" && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-900 flex items-center justify-between">
+          <span>
+            <strong>{pendingCount}</strong> job{pendingCount === 1 ? "" : "s"} waiting for review.
+          </span>
+          <button
+            onClick={() => setStatus("pending")}
+            className="text-xs font-semibold underline hover:no-underline"
+          >
+            Review queue →
+          </button>
         </div>
       )}
 
@@ -176,18 +234,31 @@ export function AdminJobsClient({ initial }: Props) {
           ))}
         </select>
         <div className="md:col-span-5 flex items-center gap-3 flex-wrap">
-          <div className="flex gap-1">
-            {STATUS_OPTIONS.map((s) => (
-              <button
-                key={s}
-                onClick={() => setStatus(s)}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium border ${
-                  status === s ? "bg-ink text-white border-ink" : "bg-surface border-line"
-                }`}
-              >
-                {s}
-              </button>
-            ))}
+          <div className="flex gap-1 flex-wrap">
+            {STATUS_OPTIONS.map((s) => {
+              const count =
+                s === "pending"
+                  ? pendingCount
+                  : s === "approved"
+                  ? jobs.filter((j) => (j.status ?? "approved") === "approved").length
+                  : s === "rejected"
+                  ? jobs.filter((j) => j.status === "rejected").length
+                  : null;
+              return (
+                <button
+                  key={s}
+                  onClick={() => setStatus(s)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium border ${
+                    status === s ? "bg-ink text-white border-ink" : "bg-surface border-line"
+                  }`}
+                >
+                  {s}
+                  {count !== null && count > 0 && (
+                    <span className="ml-1 text-[10px] opacity-75">({count})</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
           <span className="text-xs text-muted">
             Showing {filtered.length} / {jobs.length}
@@ -233,52 +304,88 @@ export function AdminJobsClient({ initial }: Props) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((j) => (
-              <tr key={j.id} className="border-t border-line/60">
-                <td className="px-3 py-2">
-                  <input
-                    type="checkbox"
-                    checked={selected.has(j.id)}
-                    onChange={() => toggle(j.id)}
-                  />
-                </td>
-                <td className="px-3 py-2">
-                  <a
-                    href={j.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-ink font-medium hover:underline"
-                  >
-                    {j.title_raw}
-                  </a>
-                  <div className="text-[11px] text-muted">{j.location}</div>
-                </td>
-                <td className="px-3 py-2">{j.employer}</td>
-                <td className="px-3 py-2">
-                  <span className="text-[11px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-line/40">
-                    {j.domain}
-                  </span>
-                </td>
-                <td className="px-3 py-2 uppercase text-xs">{j.seniority}</td>
-                <td className="px-3 py-2 text-xs">{j.source_channel}</td>
-                <td className="px-3 py-2 text-xs">
-                  {j.is_open ? (
-                    <span className="text-emerald-700 font-medium">open</span>
-                  ) : (
-                    <span className="text-muted">closed</span>
-                  )}
-                </td>
-                <td className="px-3 py-2 text-right">
-                  <button
-                    onClick={() => handleDeleteOne(j.id, j.title_raw)}
-                    disabled={busy}
-                    className="text-rose-700 text-xs font-medium hover:underline disabled:opacity-40"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {filtered.map((j) => {
+              const jStatus = j.status ?? "approved";
+              return (
+                <tr key={j.id} className="border-t border-line/60">
+                  <td className="px-3 py-2">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(j.id)}
+                      onChange={() => toggle(j.id)}
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <a
+                      href={j.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-ink font-medium hover:underline"
+                    >
+                      {j.title_raw}
+                    </a>
+                    <div className="text-[11px] text-muted">{j.location}</div>
+                    {j.submitted_at && (
+                      <div className="text-[10px] text-muted/80">
+                        Submitted {new Date(j.submitted_at).toLocaleDateString()}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-3 py-2">{j.employer}</td>
+                  <td className="px-3 py-2">
+                    <span className="text-[11px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-line/40">
+                      {j.domain}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 uppercase text-xs">{j.seniority}</td>
+                  <td className="px-3 py-2 text-xs">{j.source_channel}</td>
+                  <td className="px-3 py-2 text-xs">
+                    <ModerationBadge status={jStatus} isOpen={j.is_open} />
+                  </td>
+                  <td className="px-3 py-2 text-right whitespace-nowrap">
+                    {jStatus === "pending" && (
+                      <>
+                        <button
+                          onClick={() => handleSetStatus(j.id, "approved")}
+                          disabled={busy}
+                          className="text-emerald-700 text-xs font-semibold hover:underline disabled:opacity-40"
+                        >
+                          Approve
+                        </button>
+                        <span className="text-line mx-1.5">·</span>
+                        <button
+                          onClick={() => handleSetStatus(j.id, "rejected")}
+                          disabled={busy}
+                          className="text-amber-700 text-xs font-medium hover:underline disabled:opacity-40"
+                        >
+                          Reject
+                        </button>
+                        <span className="text-line mx-1.5">·</span>
+                      </>
+                    )}
+                    {jStatus === "rejected" && (
+                      <>
+                        <button
+                          onClick={() => handleSetStatus(j.id, "approved")}
+                          disabled={busy}
+                          className="text-emerald-700 text-xs font-semibold hover:underline disabled:opacity-40"
+                        >
+                          Approve
+                        </button>
+                        <span className="text-line mx-1.5">·</span>
+                      </>
+                    )}
+                    <button
+                      onClick={() => handleDeleteOne(j.id, j.title_raw)}
+                      disabled={busy}
+                      className="text-rose-700 text-xs font-medium hover:underline disabled:opacity-40"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-3 py-10 text-center text-muted text-sm">
@@ -290,6 +397,26 @@ export function AdminJobsClient({ initial }: Props) {
         </table>
       </div>
     </div>
+  );
+}
+
+function ModerationBadge({
+  status,
+  isOpen,
+}: {
+  status: NonNullable<Job["status"]>;
+  isOpen: boolean;
+}) {
+  if (status === "pending") {
+    return <span className="text-amber-700 font-medium">pending</span>;
+  }
+  if (status === "rejected") {
+    return <span className="text-rose-700 font-medium">rejected</span>;
+  }
+  return isOpen ? (
+    <span className="text-emerald-700 font-medium">open</span>
+  ) : (
+    <span className="text-muted">closed</span>
   );
 }
 

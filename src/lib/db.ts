@@ -109,6 +109,9 @@ function rowToJob(row: Row): Job {
     date_last_seen: toISO(row.date_last_seen),
     is_open: Boolean(row.is_open),
     employer_verified: Boolean(row.employer_verified),
+    status: ((row.status as string) ?? "approved") as Job["status"],
+    submitted_by_user_id: (row.submitted_by_user_id as string | null) ?? null,
+    submitted_at: row.submitted_at ? toISO(row.submitted_at) : null,
   };
 }
 
@@ -147,13 +150,25 @@ function rowToCandidate(row: Row): Candidate {
 
 // --- Jobs -----------------------------------------------------------------
 
-export async function listJobs(opts: { openOnly?: boolean } = {}): Promise<Job[]> {
+export async function listJobs(
+  opts: { openOnly?: boolean; status?: "approved" | "pending" | "rejected" | "all" } = {},
+): Promise<Job[]> {
   await ensureSchema();
   const s = sql();
   const openOnly = opts.openOnly !== false;
-  const rows = openOnly
-    ? ((await s`SELECT * FROM jobs WHERE is_open = TRUE ORDER BY date_posted DESC`) as Row[])
-    : ((await s`SELECT * FROM jobs ORDER BY date_posted DESC`) as Row[]);
+  // Default: only approved jobs (the public catalogue). Admin code passes
+  // status: "all" or "pending" when it needs the moderation queue.
+  const status = opts.status ?? "approved";
+  let rows: Row[];
+  if (openOnly && status !== "all") {
+    rows = (await s`SELECT * FROM jobs WHERE is_open = TRUE AND status = ${status} ORDER BY date_posted DESC`) as Row[];
+  } else if (openOnly) {
+    rows = (await s`SELECT * FROM jobs WHERE is_open = TRUE ORDER BY date_posted DESC`) as Row[];
+  } else if (status !== "all") {
+    rows = (await s`SELECT * FROM jobs WHERE status = ${status} ORDER BY date_posted DESC`) as Row[];
+  } else {
+    rows = (await s`SELECT * FROM jobs ORDER BY date_posted DESC`) as Row[];
+  }
   return rows.map(rowToJob);
 }
 
@@ -216,6 +231,48 @@ export async function upsertJob(j: Job): Promise<void> {
       is_open = EXCLUDED.is_open,
       employer_verified = EXCLUDED.employer_verified
   `;
+}
+
+// Insert a brand-new company-submitted job in the moderation queue. The row
+// lands with status='pending' and tracks who submitted it; admins approve or
+// reject from /admin/jobs. Public listings (listJobs default) skip pending
+// rows entirely.
+export async function submitPendingJob(j: Job, userId: string): Promise<void> {
+  await ensureSchema();
+  await sql()`
+    INSERT INTO jobs (
+      id, title_raw, title_normalized, employer, employer_category,
+      domain, function, seniority, tech_stack, department, description,
+      base_min, base_max, bonus_pct_target, token_pct_target,
+      carry_or_equity_pct, vesting_years, cliff_months, location,
+      remote_policy, jurisdiction_required, visa_sponsored, regulated,
+      stage, team_size_band, aum_usd, source_url, source_channel,
+      date_posted, date_last_seen, is_open, employer_verified,
+      status, submitted_by_user_id, submitted_at
+    ) VALUES (
+      ${j.id}, ${j.title_raw}, ${j.title_normalized}, ${j.employer}, ${j.employer_category},
+      ${j.domain}, ${j.function}, ${j.seniority}, ${JSON.stringify(j.tech_stack)}::jsonb, ${j.department ?? null}, ${j.description},
+      ${j.base_min}, ${j.base_max}, ${j.bonus_pct_target}, ${j.token_pct_target},
+      ${j.carry_or_equity_pct}, ${j.vesting_years}, ${j.cliff_months}, ${j.location},
+      ${j.remote_policy}, ${j.jurisdiction_required}, ${j.visa_sponsored}, ${j.regulated},
+      ${j.stage}, ${j.team_size_band}, ${j.aum_usd}, ${j.source_url}, ${j.source_channel},
+      ${j.date_posted}, ${j.date_last_seen}, ${j.is_open}, ${j.employer_verified},
+      'pending', ${userId}, NOW()
+    )
+  `;
+}
+
+// Approve a pending job — flips status to 'approved' so it surfaces publicly.
+// Idempotent: re-approving a row is a no-op.
+export async function approveJob(id: string): Promise<void> {
+  await ensureSchema();
+  await sql()`UPDATE jobs SET status = 'approved' WHERE id = ${id}`;
+}
+
+// Reject a pending job — keeps the row for audit but hides it from listings.
+export async function rejectJob(id: string): Promise<void> {
+  await ensureSchema();
+  await sql()`UPDATE jobs SET status = 'rejected' WHERE id = ${id}`;
 }
 
 // --- Candidates (incl. demo personas) ------------------------------------
@@ -395,12 +452,15 @@ function newId(prefix: string): string {
   return `${prefix}_${randomBytes(9).toString("base64url")}`;
 }
 
+export type AccountType = "candidate" | "company";
+
 export interface UserRow {
   id: string;
   email: string;
   created_at: string;
   last_login_at: string | null;
   is_admin: boolean;
+  account_type: AccountType;
 }
 
 function rowToUser(row: Row): UserRow {
@@ -410,7 +470,23 @@ function rowToUser(row: Row): UserRow {
     created_at: toISO(row.created_at),
     last_login_at: row.last_login_at ? toISO(row.last_login_at) : null,
     is_admin: Boolean(row.is_admin),
+    account_type: ((row.account_type as string) ?? "candidate") as AccountType,
   };
+}
+
+// Set a user's account type (candidate ↔ company). Used by the signin flow
+// when a new account picks "I'm hiring", and by admins when re-typing a row.
+export async function setUserAccountType(id: string, type: AccountType): Promise<void> {
+  await ensureSchema();
+  await sql()`UPDATE users SET account_type = ${type} WHERE id = ${id}`;
+}
+
+// Admin-only: toggle is_admin on an existing user. We keep the env-var
+// allow-list as a fallback so the project owner can never lock themselves
+// out — but day-to-day promotions go through this UI flow.
+export async function setUserIsAdminById(id: string, isAdmin: boolean): Promise<void> {
+  await ensureSchema();
+  await sql()`UPDATE users SET is_admin = ${isAdmin} WHERE id = ${id}`;
 }
 
 export async function getUserByEmail(email: string): Promise<UserRow | null> {
@@ -455,7 +531,10 @@ export async function promoteToAdminIfAllowlisted(user: UserRow): Promise<UserRo
   return { ...user, is_admin: true };
 }
 
-export async function upsertUserByEmail(email: string): Promise<UserRow> {
+export async function upsertUserByEmail(
+  email: string,
+  opts: { accountType?: AccountType } = {},
+): Promise<UserRow> {
   await ensureSchema();
   const normalized = email.trim().toLowerCase();
   const shouldBeAdmin = isAdminEmail(normalized);
@@ -469,9 +548,10 @@ export async function upsertUserByEmail(email: string): Promise<UserRow> {
     return { ...existing, last_login_at: new Date().toISOString() };
   }
   const id = newId("user");
+  const accountType: AccountType = opts.accountType ?? "candidate";
   await sql()`
-    INSERT INTO users (id, email, last_login_at, is_admin)
-    VALUES (${id}, ${normalized}, NOW(), ${shouldBeAdmin})
+    INSERT INTO users (id, email, last_login_at, is_admin, account_type)
+    VALUES (${id}, ${normalized}, NOW(), ${shouldBeAdmin}, ${accountType})
   `;
   return {
     id,
@@ -479,6 +559,7 @@ export async function upsertUserByEmail(email: string): Promise<UserRow> {
     created_at: new Date().toISOString(),
     last_login_at: new Date().toISOString(),
     is_admin: shouldBeAdmin,
+    account_type: accountType,
   };
 }
 
@@ -490,20 +571,22 @@ export interface MagicLinkToken {
   redirect_to: string | null;
   expires_at: string;
   consumed_at: string | null;
+  account_type: AccountType | null;
 }
 
 export async function createMagicLinkToken(
   email: string,
   redirectTo: string | null = null,
   ttlMinutes = 15,
+  accountType: AccountType | null = null,
 ): Promise<string> {
   await ensureSchema();
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + ttlMinutes * 60_000).toISOString();
   const normalized = email.trim().toLowerCase();
   await sql()`
-    INSERT INTO magic_link_tokens (token, email, redirect_to, expires_at)
-    VALUES (${token}, ${normalized}, ${redirectTo}, ${expiresAt})
+    INSERT INTO magic_link_tokens (token, email, redirect_to, expires_at, account_type)
+    VALUES (${token}, ${normalized}, ${redirectTo}, ${expiresAt}, ${accountType})
   `;
   return token;
 }
@@ -517,7 +600,7 @@ export async function consumeMagicLinkToken(token: string): Promise<MagicLinkTok
     WHERE token = ${token}
       AND consumed_at IS NULL
       AND expires_at > NOW()
-    RETURNING token, email, redirect_to, expires_at, consumed_at
+    RETURNING token, email, redirect_to, expires_at, consumed_at, account_type
   `) as Row[];
   if (!rows[0]) return null;
   const r = rows[0];
@@ -527,6 +610,7 @@ export async function consumeMagicLinkToken(token: string): Promise<MagicLinkTok
     redirect_to: (r.redirect_to as string | null) ?? null,
     expires_at: toISO(r.expires_at),
     consumed_at: toISO(r.consumed_at),
+    account_type: ((r.account_type as string | null) ?? null) as AccountType | null,
   };
 }
 
@@ -814,16 +898,22 @@ export interface AdminUserRow extends UserRow {
   candidate_id: string | null;
   candidate_display_name: string | null;
   candidate_headline: string | null;
+  pending_jobs_count: number;
+  approved_jobs_count: number;
 }
 
 export async function listUsersAdmin(): Promise<AdminUserRow[]> {
   await ensureSchema();
   const rows = (await sql()`
     SELECT
-      u.id, u.email, u.created_at, u.last_login_at, u.is_admin,
+      u.id, u.email, u.created_at, u.last_login_at, u.is_admin, u.account_type,
       c.id AS candidate_id,
       c.display_name AS candidate_display_name,
-      c.headline AS candidate_headline
+      c.headline AS candidate_headline,
+      (SELECT COUNT(*)::int FROM jobs j
+        WHERE j.submitted_by_user_id = u.id AND j.status = 'pending') AS pending_jobs_count,
+      (SELECT COUNT(*)::int FROM jobs j
+        WHERE j.submitted_by_user_id = u.id AND j.status = 'approved') AS approved_jobs_count
     FROM users u
     LEFT JOIN candidates c ON c.user_id = u.id
     ORDER BY u.created_at DESC
@@ -834,9 +924,12 @@ export async function listUsersAdmin(): Promise<AdminUserRow[]> {
     created_at: toISO(row.created_at),
     last_login_at: row.last_login_at ? toISO(row.last_login_at) : null,
     is_admin: Boolean(row.is_admin),
+    account_type: ((row.account_type as string) ?? "candidate") as AccountType,
     candidate_id: (row.candidate_id as string | null) ?? null,
     candidate_display_name: (row.candidate_display_name as string | null) ?? null,
     candidate_headline: (row.candidate_headline as string | null) ?? null,
+    pending_jobs_count: (row.pending_jobs_count as number) ?? 0,
+    approved_jobs_count: (row.approved_jobs_count as number) ?? 0,
   }));
 }
 

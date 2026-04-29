@@ -5,29 +5,44 @@ import { Logo } from "./Logo";
 
 export async function Nav() {
   const user = await getSessionUser().catch(() => null);
+  // Company accounts ONLY see Post a Job (and admin if they're owners). The
+  // rest of the candidate experience (feed, profile, browse) is hidden so
+  // hiring users don't get confused by a UI that isn't aimed at them.
+  const isCompany = user?.account_type === "company";
 
   return (
     <nav className="border-b border-line bg-paper/80 backdrop-blur">
       <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 group">
+        <Link
+          href={isCompany ? "/post-job" : "/"}
+          className="flex items-center gap-2 group"
+        >
           <Logo size={28} />
           <span className="text-[10px] uppercase tracking-widest text-muted ml-1">alpha</span>
         </Link>
         <div className="flex items-center gap-4 text-sm">
-          <Link
-            href={user ? "/feed" : "/jobs"}
-            className="text-muted hover:text-ink transition"
-          >
-            {user ? "My feed" : "Browse jobs"}
-          </Link>
-          {user ? (
-            <Link href="/profile" className="text-muted hover:text-ink transition">
-              Profile
+          {isCompany ? (
+            <Link href="/post-job" className="text-muted hover:text-ink transition">
+              Post a job
             </Link>
           ) : (
-            <Link href="/onboarding" className="text-muted hover:text-ink transition">
-              Tour
-            </Link>
+            <>
+              <Link
+                href={user ? "/feed" : "/jobs"}
+                className="text-muted hover:text-ink transition"
+              >
+                {user ? "My feed" : "Browse jobs"}
+              </Link>
+              {user ? (
+                <Link href="/profile" className="text-muted hover:text-ink transition">
+                  Profile
+                </Link>
+              ) : (
+                <Link href="/onboarding" className="text-muted hover:text-ink transition">
+                  Tour
+                </Link>
+              )}
+            </>
           )}
           {user?.is_admin && (
             <Link href="/admin" className="text-muted hover:text-ink transition">

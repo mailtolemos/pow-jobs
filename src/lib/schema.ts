@@ -58,6 +58,23 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(lower(email));
 
+-- account_type lets us route the UI: "candidate" sees /feed and personal
+-- alerts; "company" sees only /post-job and their own pending submissions.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS account_type TEXT NOT NULL DEFAULT 'candidate';
+CREATE INDEX IF NOT EXISTS idx_users_account_type ON users(account_type);
+
+-- Jobs status: scraped/seeded rows are auto-approved; company-submitted
+-- rows start as 'pending' and only appear publicly after an admin
+-- approves them.
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'approved';
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS submitted_by_user_id TEXT REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMPTZ;
+CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
+-- Fast moderation-queue lookup (admins live on this query).
+CREATE INDEX IF NOT EXISTS idx_jobs_pending ON jobs(submitted_at DESC) WHERE status = 'pending';
+-- Per-submitter listing on /post-job uses this.
+CREATE INDEX IF NOT EXISTS idx_jobs_submitted_by ON jobs(submitted_by_user_id, submitted_at DESC) WHERE submitted_by_user_id IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS candidates (
   id TEXT PRIMARY KEY,
   user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
@@ -140,6 +157,11 @@ CREATE TABLE IF NOT EXISTS magic_link_tokens (
 );
 
 CREATE INDEX IF NOT EXISTS idx_magic_expires ON magic_link_tokens(expires_at);
+
+-- account_type carried through magic-link sign-in so a brand-new "I'm hiring"
+-- email lands as a company account on first verify (and existing accounts
+-- can opt into company mode by re-signing via the hiring form).
+ALTER TABLE magic_link_tokens ADD COLUMN IF NOT EXISTS account_type TEXT;
 
 -- Dedup for outbound alerts so the cron doesn't re-send the same job.
 CREATE TABLE IF NOT EXISTS sent_alerts (
