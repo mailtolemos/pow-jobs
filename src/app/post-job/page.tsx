@@ -9,6 +9,7 @@ import { sql, ensureSchema } from "@/lib/db";
 import type { Job } from "@/lib/types";
 import { PostJobClient } from "./PostJobClient";
 import { TelegramCTA } from "@/components/TelegramCTA";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export const dynamic = "force-dynamic";
 
@@ -131,6 +132,8 @@ export default async function PostJobPage() {
           </div>
         </div>
       )}
+
+      <SiteFooter contactSubject="ProWo · /post-job" />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { listJobs } from "@/lib/db";
 import { JobsBrowseClient } from "./JobsBrowseClient";
 import { TelegramCTA } from "@/components/TelegramCTA";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export default async function JobsBrowsePage() {
         <TelegramCTA variant="button" className="shrink-0" />
       </div>
       <JobsBrowseClient initial={jobs} />
+      <SiteFooter contactSubject="ProWo · /jobs" />
     </div>
   );
 }

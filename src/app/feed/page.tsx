@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getCandidateByUserId, listCandidates, getCandidateExtras } from "@/lib/db";
 import { FeedClient } from "./FeedClient";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export const dynamic = "force-dynamic";
 
@@ -19,11 +20,14 @@ export default async function FeedPage() {
   const demo = user ? [] : await listCandidates({ demoOnly: true });
 
   return (
-    <FeedClient
-      signedInAs={user?.email ?? null}
-      myCandidate={myCandidate}
-      profileIncomplete={myCandidate ? !(myExtras?.profile_complete ?? false) : false}
-      demoPersonas={demo}
-    />
+    <>
+      <FeedClient
+        signedInAs={user?.email ?? null}
+        myCandidate={myCandidate}
+        profileIncomplete={myCandidate ? !(myExtras?.profile_complete ?? false) : false}
+        demoPersonas={demo}
+      />
+      <SiteFooter contactSubject="ProWo · /feed" />
+    </>
   );
 }

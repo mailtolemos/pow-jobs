@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getCandidateByUserId, getCandidateExtras } from "@/lib/db";
 import { ProfileEditor } from "./ProfileEditor";
+import { CONTACT_EMAIL, contactMailto } from "@/lib/contact";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,15 @@ export default async function ProfilePage() {
         extras={extras}
         telegramBotUsername={telegramBotUsername}
       />
+      <div className="mt-8 text-xs text-muted text-center">
+        Need help, want to delete your account, or have feedback?{" "}
+        <a
+          href={contactMailto("ProWo profile help", `Hi ProWo team,\n\n(My account: ${user.email})\n\n`)}
+          className="underline hover:text-ink"
+        >
+          Email {CONTACT_EMAIL}
+        </a>
+      </div>
     </div>
   );
 }

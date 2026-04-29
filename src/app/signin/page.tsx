@@ -3,6 +3,7 @@
 import { useState, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { CONTACT_EMAIL, contactMailto } from "@/lib/contact";
 
 type AccountType = "candidate" | "company";
 
@@ -160,10 +161,21 @@ function SigninInner() {
         </div>
       )}
 
-      <div className="text-center mt-6">
-        <Link href="/" className="text-sm text-muted hover:text-ink">
-          ← Back to homepage
-        </Link>
+      <div className="text-center mt-6 space-y-2">
+        <div>
+          <Link href="/" className="text-sm text-muted hover:text-ink">
+            ← Back to homepage
+          </Link>
+        </div>
+        <div className="text-xs text-muted">
+          Trouble signing in?{" "}
+          <a
+            href={contactMailto("Sign-in trouble on ProWo")}
+            className="underline hover:text-ink"
+          >
+            {CONTACT_EMAIL}
+          </a>
+        </div>
       </div>
     </div>
   );

@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { CONTACT_EMAIL, contactMailto } from "@/lib/contact";
 
 interface Props {
   submitterEmail: string;
@@ -186,7 +187,15 @@ export function PostJobClient({ submitterEmail }: Props) {
         <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-900">
           Submitted! Your role is now in the moderation queue (id&nbsp;
           <code className="font-mono text-xs">{result.jobId}</code>). You&rsquo;ll get an email at
-          {" "}<strong>{submitterEmail}</strong> when it&rsquo;s reviewed.
+          {" "}<strong>{submitterEmail}</strong> when it&rsquo;s reviewed. Need to edit it before that?
+          {" "}
+          <a
+            href={contactMailto(`Edit submitted role ${result.jobId}`)}
+            className="underline font-semibold"
+          >
+            Email {CONTACT_EMAIL}
+          </a>
+          .
         </div>
       )}
       {result?.kind === "err" && (
@@ -429,8 +438,11 @@ export function PostJobClient({ submitterEmail }: Props) {
 
       <div className="text-xs text-muted text-center pt-1">
         Need to make changes after submitting?{" "}
-        <Link href="mailto:mailtolemos@gmail.com" className="underline">
-          Contact us
+        <Link
+          href={contactMailto("Edit my submitted role on ProWo")}
+          className="underline"
+        >
+          Email {CONTACT_EMAIL}
         </Link>
         .
       </div>

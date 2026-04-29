@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SiteFooter } from "@/components/SiteFooter";
 
 const STEPS = [
   {
@@ -67,6 +68,7 @@ export default function OnboardingPage() {
           See the feed →
         </Link>
       </div>
+      <SiteFooter contactSubject="ProWo · onboarding" />
     </div>
   );
 }
