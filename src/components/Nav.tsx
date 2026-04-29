@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { ThemeToggle } from "./ThemeToggle";
 import { Logo } from "./Logo";
+import { XCTA } from "./XCTA";
 
 export async function Nav() {
   const user = await getSessionUser().catch(() => null);
@@ -54,6 +55,7 @@ export async function Nav() {
               Admin
             </Link>
           )}
+          <XCTA variant="icon" className="hidden sm:inline-flex" />
           <ThemeToggle />
           {user ? (
             <div className="flex items-center gap-2 sm:gap-3">

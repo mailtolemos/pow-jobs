@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { CONTACT_EMAIL, contactMailto } from "@/lib/contact";
 import { TelegramCTA } from "./TelegramCTA";
+import { XCTA } from "./XCTA";
 
 interface Props {
   className?: string;
@@ -26,6 +27,7 @@ export function SiteFooter({ className = "", contactSubject = "ProWo" }: Props) 
             Post a job
           </Link>
           <TelegramCTA variant="link" />
+          <XCTA variant="link" />
           <a
             href={contactMailto(contactSubject)}
             className="hover:text-ink transition"
