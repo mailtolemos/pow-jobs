@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { CompanyCarousel } from "@/components/CompanyCarousel";
 
 export default function LandingPage() {
   return (
@@ -15,9 +16,9 @@ export default function LandingPage() {
             <span className="text-accent">tech, crypto &amp; finance</span>.
           </h1>
           <p className="text-lg text-muted mt-6 leading-relaxed max-w-2xl">
-            ProWo (Proof of Work) connects top talent with the fastest-growing companies in tech, crypto,
-            fintech, and global finance. No spam. No outdated listings. Just real opportunities from real
-            companies.
+            ProWo (Proof of Work) connects top talent with the fastest-growing companies in tech, AI,
+            crypto, fintech, banking, trading, and global finance. No spam. No outdated listings. Just
+            real opportunities from real companies.
           </p>
 
           <div className="mt-10 flex flex-wrap gap-3">
@@ -40,10 +41,13 @@ export default function LandingPage() {
             <span className="text-line">·</span>
             <span>Updated daily</span>
             <span className="text-line">·</span>
-            <span>Built for the next generation of finance</span>
+            <span>Tech, crypto, finance — one feed</span>
           </div>
         </div>
       </section>
+
+      {/* COMPANY LOGO CAROUSEL ------------------------------------------- */}
+      <CompanyCarousel />
 
       {/* VALUE PROPS ---------------------------------------------------- */}
       <section className="max-w-5xl mx-auto px-6 py-16 md:py-20">
@@ -51,17 +55,17 @@ export default function LandingPage() {
           <ValueProp
             icon="⚡"
             title="Curated Roles"
-            body="Only high-quality opportunities from vetted companies. Every listing is parsed into a real schema — comp bands, token upside, jurisdiction, vesting, dealbreakers."
+            body="Only high-quality opportunities from vetted companies. Every listing is parsed into a real schema — comp bands, equity / token upside, jurisdiction, vesting, dealbreakers."
           />
           <ValueProp
             icon="🌍"
             title="Global & Remote"
-            body="Work from anywhere. Crypto doesn't sleep — and neither do opportunities. From Lisbon to Lagos, Tokyo to Toronto."
+            body="Work from anywhere. Markets don't sleep — and neither do opportunities. From Lisbon to Lagos, Tokyo to Toronto."
           />
           <ValueProp
             icon="📈"
             title="Career Growth"
-            body="From early-stage startups to top-tier funds, find roles that actually move your career forward. We match on upside, not just keywords."
+            body="From early-stage startups to top-tier funds and AI labs, find roles that actually move your career forward. We match on upside, not just keywords."
           />
         </div>
       </section>
@@ -77,10 +81,12 @@ export default function LandingPage() {
               Don&rsquo;t just get a job &mdash; get an edge.
             </h2>
             <p className="text-muted mt-5 leading-relaxed">
-              Discover roles across engineering, trading, research, design, marketing, and operations in
-              the most exciting sector in finance. We score every open role against your real preferences
-              &mdash; comp floor, jurisdiction, domain, token upside, dealbreakers &mdash; and only send
-              you what&rsquo;s actually worth your time.
+              Discover roles across engineering, AI &amp; ML, quant research, trading, product, design,
+              data, marketing, business, legal &amp; compliance, and operations &mdash; spanning tech and
+              AI labs, crypto and Web3, fintech, banking, hedge funds, prop shops, and global finance.
+              We score every open role against your real preferences &mdash; comp floor, jurisdiction,
+              domain, equity / token upside, dealbreakers &mdash; and only send you what&rsquo;s actually
+              worth your time.
             </p>
             <div className="mt-6 flex gap-3">
               <Link
@@ -98,7 +104,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="grid gap-3">
-            <Bullet text="Your next job is probably in crypto. You just haven't seen it yet." />
+            <Bullet text="One feed for the highest-signal roles in tech, crypto & finance." />
             <Bullet text="Stop scrolling job boards. Start finding signal." />
             <Bullet text="Silence when there's nothing good — not a filler list." />
             <Bullet text="Pseudonymous profiles welcome. Your wallet can be your resume." />
@@ -138,7 +144,7 @@ export default function LandingPage() {
           </div>
           <div className="md:order-1 grid gap-3">
             <Bullet text="Ashby, Greenhouse, Lever, RSS, custom HTML — we ingest it all." />
-            <Bullet text="Every role classified: domain, seniority, tech stack, token upside." />
+            <Bullet text="Every role classified: domain, seniority, tech stack, equity / token upside." />
             <Bullet text="LLM-judged matches so your listing only reaches the right people." />
             <Bullet text="Daily email + Telegram alerts hit candidates where they already are." />
           </div>
@@ -151,9 +157,9 @@ export default function LandingPage() {
           <div className="flex items-center gap-2">
             <Logo size={22} />
           </div>
-          <div className="text-xs">Built for the next generation of finance.</div>
+          <div className="text-xs">© {new Date().getFullYear()} ProWo · Proof of Work</div>
           <div className="flex gap-4 text-xs">
-            <Link href="/feed" className="hover:text-ink transition">
+            <Link href="/jobs" className="hover:text-ink transition">
               Browse
             </Link>
             <Link href="/post-job" className="hover:text-ink transition">

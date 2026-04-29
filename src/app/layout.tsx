@@ -4,9 +4,9 @@ import { Nav } from "@/components/Nav";
 import { ThemeProvider, ThemeScript } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "ProWo — Find your next move.",
+  title: "ProWo — Find your next job in tech, crypto & finance.",
   description:
-    "ProWo connects top talent with the fastest-growing companies in crypto, fintech, and global finance. No noise, just signal.",
+    "ProWo connects top talent with the fastest-growing companies in tech, AI, crypto, fintech, banking, trading, and global finance. No noise, just signal.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

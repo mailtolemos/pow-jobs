@@ -5,7 +5,8 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Browse jobs — ProWo",
-  description: "Every open role in crypto, fintech, and global finance on ProWo.",
+  description:
+    "Every open role in tech, AI, crypto, fintech, banking, trading, and global finance on ProWo.",
 };
 
 export default async function JobsBrowsePage() {
@@ -17,7 +18,7 @@ export default async function JobsBrowsePage() {
           Browse jobs
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-ink tracking-tight">
-          Every open role in crypto &amp; finance.
+          Every open role in tech, crypto &amp; finance.
         </h1>
         <p className="text-muted mt-2 text-sm max-w-2xl">
           The full public catalogue — curated, filterable, updated daily.
