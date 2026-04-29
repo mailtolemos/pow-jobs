@@ -16,14 +16,12 @@ export async function Nav() {
           <span className="text-[10px] uppercase tracking-widest text-muted ml-1">alpha</span>
         </Link>
         <div className="flex items-center gap-4 text-sm">
-          <Link href="/jobs" className="text-muted hover:text-ink transition">
-            Browse jobs
+          <Link
+            href={user ? "/feed" : "/jobs"}
+            className="text-muted hover:text-ink transition"
+          >
+            {user ? "My feed" : "Browse jobs"}
           </Link>
-          {user && (
-            <Link href="/feed" className="text-muted hover:text-ink transition">
-              My feed
-            </Link>
-          )}
           {user ? (
             <Link href="/profile" className="text-muted hover:text-ink transition">
               Profile
@@ -33,9 +31,6 @@ export async function Nav() {
               Tour
             </Link>
           )}
-          <Link href="/email-preview" className="text-muted hover:text-ink transition hidden md:inline">
-            Email preview
-          </Link>
           {user?.is_admin && (
             <Link href="/admin" className="text-muted hover:text-ink transition">
               Admin

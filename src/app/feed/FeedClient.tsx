@@ -99,13 +99,21 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-ink">Your feed</h1>
-        <p className="text-muted mt-1 text-sm">
-          {mode === "me"
-            ? "Live matching against the profile you saved. Tune it anytime from your profile page."
-            : "Live matching against a demo persona — sign in to see matches for your real profile."}
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div className="min-w-0">
+          <h1 className="text-3xl font-bold text-ink">Your feed</h1>
+          <p className="text-muted mt-1 text-sm">
+            {mode === "me"
+              ? "Live matching against the profile you saved. Tune it anytime from your profile page."
+              : "Live matching against a demo persona — sign in to see matches for your real profile."}
+          </p>
+        </div>
+        <Link
+          href="/jobs"
+          className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-accent text-white px-4 py-2 text-sm font-semibold hover:bg-accent2 transition shadow-soft"
+        >
+          Check all jobs →
+        </Link>
       </div>
 
       {signedInAs && profileIncomplete && mode === "me" && (

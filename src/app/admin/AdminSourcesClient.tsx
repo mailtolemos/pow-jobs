@@ -113,16 +113,22 @@ export function AdminSourcesClient({ initial }: Props) {
     }
   }
 
-  async function handleSeed(kind: "cryptos" | "finance") {
+  async function handleSeed(kind: "cryptos" | "finance" | "tech") {
     const labels = {
       cryptos: "top crypto career boards (Coinbase, Kraken, Solana, etc.)",
       finance: "top finance / trading / VC boards (Two Sigma, Citadel, Stripe, a16z, etc.)",
+      tech: "top tech / AI / IT boards (OpenAI, Anthropic, Vercel, Databricks, Notion, etc.)",
     };
     if (!confirm(`Add the curated list of ${labels[kind]}? Existing sources are skipped. You can delete any individually after.`)) return;
     setBusy(true);
     setErr(null);
     try {
-      const endpoint = kind === "cryptos" ? "/api/admin/seed-cryptos" : "/api/admin/seed-finance";
+      const endpoint =
+        kind === "cryptos"
+          ? "/api/admin/seed-cryptos"
+          : kind === "finance"
+          ? "/api/admin/seed-finance"
+          : "/api/admin/seed-tech";
       const res = await fetch(endpoint, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
@@ -377,6 +383,14 @@ export function AdminSourcesClient({ initial }: Props) {
               title="Bulk-add top finance / trading / VC boards (Two Sigma, Citadel, Stripe, a16z, etc.)"
             >
               + Top finance/VC boards
+            </button>
+            <button
+              onClick={() => handleSeed("tech")}
+              disabled={busy || fetchingAll}
+              className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+              title="Bulk-add top tech / AI / IT boards (OpenAI, Anthropic, Vercel, Databricks, Notion, etc.)"
+            >
+              + Top tech/AI boards
             </button>
             <button
               onClick={handleFetchAll}
