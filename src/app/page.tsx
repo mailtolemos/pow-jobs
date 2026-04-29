@@ -7,41 +7,58 @@ export default function LandingPage() {
     <>
       {/* HERO ----------------------------------------------------------- */}
       <section className="border-b border-line">
-        <div className="max-w-5xl mx-auto px-6 pt-16 pb-20 md:pt-24 md:pb-28">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-accent font-semibold mb-4">
-            Find your next move.
-          </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-ink leading-[1.05] tracking-tight max-w-3xl">
-            Find your next job in{" "}
-            <span className="text-accent">tech, crypto &amp; finance</span>.
-          </h1>
-          <p className="text-lg text-muted mt-6 leading-relaxed max-w-2xl">
-            ProWo (Proof of Work) connects top talent with the fastest-growing companies in tech, AI,
-            crypto, fintech, banking, trading, and global finance. No spam. No outdated listings. Just
-            real opportunities from real companies.
-          </p>
+        <div className="max-w-5xl mx-auto px-6 pt-16 pb-20 md:pt-24 md:pb-28 grid md:grid-cols-[minmax(0,1fr)_auto] gap-10 md:gap-12 items-center">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.22em] text-accent font-semibold mb-4">
+              Find your next move.
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold text-ink leading-[1.05] tracking-tight max-w-3xl">
+              Find your next job in{" "}
+              <span className="text-accent">tech, crypto &amp; finance</span>.
+            </h1>
+            <p className="text-lg text-muted mt-6 leading-relaxed max-w-2xl">
+              ProWo (Proof of Work) connects top talent with the fastest-growing companies in tech, AI,
+              crypto, fintech, banking, trading, and global finance. No spam. No outdated listings. Just
+              real opportunities from real companies.
+            </p>
 
-          <div className="mt-10 flex flex-wrap gap-3">
-            <Link
-              href="/feed"
-              className="px-5 py-3 bg-accent text-white font-semibold rounded-lg hover:bg-accent2 transition shadow-soft"
-            >
-              Browse jobs →
-            </Link>
-            <Link
-              href="/post-job"
-              className="px-5 py-3 bg-surface border border-line text-ink font-semibold rounded-lg hover:border-accent transition"
-            >
-              Post a job
-            </Link>
+            <div className="mt-10 flex flex-wrap gap-3">
+              <Link
+                href="/feed"
+                className="px-5 py-3 bg-accent text-white font-semibold rounded-lg hover:bg-accent2 transition shadow-soft"
+              >
+                Browse jobs →
+              </Link>
+              <Link
+                href="/post-job"
+                className="px-5 py-3 bg-surface border border-line text-ink font-semibold rounded-lg hover:border-accent transition"
+              >
+                Post a job
+              </Link>
+            </div>
+
+            <div className="mt-12 text-xs text-muted flex flex-wrap items-center gap-x-6 gap-y-2">
+              <span>Curated by humans</span>
+              <span className="text-line">·</span>
+              <span>Updated daily</span>
+              <span className="text-line">·</span>
+              <span>Tech, crypto, finance — one feed</span>
+            </div>
           </div>
 
-          <div className="mt-12 text-xs text-muted flex flex-wrap items-center gap-x-6 gap-y-2">
-            <span>Curated by humans</span>
-            <span className="text-line">·</span>
-            <span>Updated daily</span>
-            <span className="text-line">·</span>
-            <span>Tech, crypto, finance — one feed</span>
+          {/* Big brand mark on the right. Hidden on mobile (the small mark
+              in the nav already brands the page; a 320px logo would crowd
+              the viewport on phones). */}
+          <div className="hidden md:flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-mark.svg"
+              alt="ProWo"
+              width={320}
+              height={400}
+              className="w-72 lg:w-80 h-auto select-none drop-shadow-xl"
+              draggable={false}
+            />
           </div>
         </div>
       </section>

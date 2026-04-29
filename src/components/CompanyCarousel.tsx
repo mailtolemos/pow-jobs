@@ -1,9 +1,14 @@
-// Infinite-scroll marquee of company logos sourced from our seed lists.
-// Uses Clearbit's free Logo API (logo.clearbit.com/<domain>) — no API key
-// needed, ~10kb per logo, gracefully falls back to a text pill if a logo
-// 404s. The list is split tech / crypto / finance and pulled from the
-// same seeds that feed the ingest engine, so the marquee always reflects
-// who we actually surface jobs for.
+// Infinite-scroll trust-bar of company logos sourced from our seed lists.
+//
+// Logo source: Clearbit's free API was retired after the 2024 HubSpot
+// acquisition (returns empty bytes), so we use DuckDuckGo's icons CDN
+// (https://icons.duckduckgo.com/ip3/<domain>.ico) which serves real
+// favicons unauthenticated. If a domain returns nothing, we fall back to
+// Google's S2 favicons API, and finally to a clean text pill.
+//
+// Each item is rendered as `<icon> CompanyName` so the row reads as a
+// trust bar even when a favicon is only 16-32px — the wordmark carries
+// the recognition.
 
 "use client";
 
@@ -11,13 +16,9 @@ import { useState } from "react";
 
 interface Company {
   name: string;
-  domain: string; // for Clearbit logo lookup
+  domain: string;
 }
 
-// Curated subset of the seed sources — the most recognisable names from each
-// vertical. We keep this hand-picked rather than auto-generating because
-// some logos (foundations, sub-brands, abbreviations) render poorly via
-// Clearbit and we'd rather miss them than show a generic letter tile.
 const COMPANIES: Company[] = [
   // --- Tech / AI ---
   { name: "OpenAI", domain: "openai.com" },
@@ -88,35 +89,34 @@ const COMPANIES: Company[] = [
 ];
 
 export function CompanyCarousel() {
-  // Render the list twice back-to-back so the marquee can scroll seamlessly
-  // — when the first half exits the viewport, the second is already in
-  // place and the keyframe loops to start.
+  // Render the list twice back-to-back so the marquee can scroll seamlessly:
+  // when the first half exits the viewport, the second is already in view
+  // and the keyframe loops to start.
   const loop = [...COMPANIES, ...COMPANIES];
 
   return (
     <section className="border-t border-b border-line bg-surface/40">
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        <div className="text-[11px] uppercase tracking-[0.22em] text-muted font-semibold mb-5 text-center">
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="text-[11px] uppercase tracking-[0.22em] text-muted font-semibold mb-6 text-center">
           Trusted across tech, crypto &amp; finance
         </div>
       </div>
       {/* Edge fade so logos drift in/out instead of clipping hard at the page edge. */}
-      <div className="relative overflow-hidden pb-10">
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-paper to-transparent z-10" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-paper to-transparent z-10" />
-        <div className="flex gap-10 marquee items-center">
+      <div className="relative overflow-hidden pb-8">
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-16 md:w-24 bg-gradient-to-r from-paper to-transparent z-10" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 md:w-24 bg-gradient-to-l from-paper to-transparent z-10" />
+        <div className="flex gap-6 marquee items-center">
           {loop.map((c, idx) => (
-            <CompanyLogo key={`${c.domain}-${idx}`} company={c} />
+            <CompanyPill key={`${c.domain}-${idx}`} company={c} />
           ))}
         </div>
       </div>
-      {/* Keyframes inlined so the component is self-contained — copy the
-          marquee with no global CSS dependency. Animation duration is wide
-          (60s) so the scroll is calm, not gimmicky. Pause on hover lets
-          users actually see a logo they're curious about. */}
+      {/* Inlined keyframes so the component is self-contained — copy-paste
+          ready with no global CSS dependency. 60s scroll is calm; pause on
+          hover lets users actually read a logo they're curious about. */}
       <style jsx>{`
         .marquee {
-          animation: prowo-marquee 60s linear infinite;
+          animation: prowo-marquee 70s linear infinite;
           width: max-content;
         }
         .marquee:hover {
@@ -140,29 +140,44 @@ export function CompanyCarousel() {
   );
 }
 
-function CompanyLogo({ company }: { company: Company }) {
-  const [errored, setErrored] = useState(false);
-  // Clearbit's logo API is free for open-source / dev use and works
-  // unauthenticated. ?size=128 gives us a crisp display at the 28px
-  // rendered height we use.
-  const src = `https://logo.clearbit.com/${company.domain}?size=128`;
+function CompanyPill({ company }: { company: Company }) {
+  // Two-step fallback: DuckDuckGo's icon CDN serves real favicons
+  // unauthenticated. If that fails (rare, but happens for newer brands),
+  // we fall back to Google's S2 favicons. Final fallback: hide the icon
+  // and render just the wordmark so the row never breaks.
+  const sources = [
+    `https://icons.duckduckgo.com/ip3/${company.domain}.ico`,
+    `https://www.google.com/s2/favicons?domain=${company.domain}&sz=128`,
+  ];
+  const [sourceIdx, setSourceIdx] = useState(0);
+  const [iconHidden, setIconHidden] = useState(false);
+
+  function handleError() {
+    if (sourceIdx < sources.length - 1) {
+      setSourceIdx((i) => i + 1);
+    } else {
+      setIconHidden(true);
+    }
+  }
+
   return (
     <div
-      className="shrink-0 h-10 flex items-center justify-center px-3 rounded-md bg-paper/70 border border-line/40"
+      className="shrink-0 h-12 flex items-center gap-2.5 px-4 rounded-xl bg-paper/70 border border-line/60"
       title={company.name}
     >
-      {errored ? (
-        <span className="text-xs font-semibold text-muted whitespace-nowrap">{company.name}</span>
-      ) : (
+      {!iconHidden && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={src}
-          alt={company.name}
+          src={sources[sourceIdx]}
+          alt=""
           loading="lazy"
-          onError={() => setErrored(true)}
-          className="max-h-7 w-auto object-contain opacity-90 hover:opacity-100 transition"
+          onError={handleError}
+          className="w-6 h-6 object-contain rounded-sm"
         />
       )}
+      <span className="text-sm font-semibold text-ink/90 whitespace-nowrap">
+        {company.name}
+      </span>
     </div>
   );
 }
