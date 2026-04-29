@@ -1,4 +1,4 @@
-// Core type definitions for Pablo Jobs.
+// Core type definitions for ProWo.
 // These mirror the structured schema described in the PRD (Section 6.5).
 
 export type Domain =

@@ -47,9 +47,9 @@ export async function POST(req: Request) {
   if (text === "/start" || text === "/help") {
     await sendTelegramMessage(
       chatId,
-      "👋 Hi! I'm the Pablo Jobs alert bot.\n\n" +
+      "👋 Hi! I'm the ProWo alert bot.\n\n" +
         "<b>Commands</b>\n" +
-        "• <code>/start &lt;code&gt;</code> — link this chat to your Pablo Jobs account (grab the code from Profile → Alerts)\n" +
+        "• <code>/start &lt;code&gt;</code> — link this chat to your ProWo account (grab the code from Profile → Alerts)\n" +
         "• <code>/chatid</code> — report this chat's ID (used when setting up the broadcast channel)\n" +
         "• <code>/stop</code> — pause alerts\n\n" +
         "<b>Broadcast setup</b>\n" +

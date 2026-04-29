@@ -14,7 +14,7 @@ export function isMailerAvailable(): boolean {
 }
 
 function getFromAddress(): string {
-  return process.env.EMAIL_FROM || "Pablo Jobs <onboarding@resend.dev>";
+  return process.env.EMAIL_FROM || "ProWo <onboarding@resend.dev>";
 }
 
 function getAppUrl(): string {
@@ -69,18 +69,18 @@ export function renderMagicLinkEmail(opts: { url: string; email: string }): {
   text: string;
 } {
   const safeUrl = opts.url.replace(/"/g, "&quot;");
-  const subject = "Sign in to Pablo Jobs";
+  const subject = "Sign in to ProWo";
   const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>${subject}</title></head>
 <body style="margin:0;padding:0;background:#FAFAF7;font-family:-apple-system,'Segoe UI',Roboto,Inter,sans-serif;">
   <div style="max-width:560px;margin:0 auto;padding:40px 24px;">
-    <div style="font-size:11px;letter-spacing:0.12em;color:#5A6578;text-transform:uppercase;margin-bottom:10px;">Pablo Jobs</div>
+    <div style="font-size:11px;letter-spacing:0.12em;color:#5A6578;text-transform:uppercase;margin-bottom:10px;">ProWo</div>
     <h1 style="font-size:22px;font-weight:700;color:#0B1220;margin:0 0 12px;">Your sign-in link</h1>
     <p style="font-size:15px;color:#3A4556;line-height:1.6;margin:0 0 24px;">
       Click the button below to sign in. The link is valid for 15 minutes and can only be used once.
     </p>
     <a href="${safeUrl}" style="display:inline-block;font-size:14px;font-weight:600;color:#ffffff;background:#B88A42;padding:12px 22px;border-radius:8px;text-decoration:none;">
-      Sign in to Pablo Jobs
+      Sign in to ProWo
     </a>
     <p style="font-size:13px;color:#5A6578;line-height:1.6;margin:32px 0 0;">
       Or copy and paste this URL into your browser:<br>
@@ -91,7 +91,7 @@ export function renderMagicLinkEmail(opts: { url: string; email: string }): {
     </div>
   </div>
 </body></html>`;
-  const text = `Sign in to Pablo Jobs\n\nOpen this link to sign in (valid 15 minutes, single use):\n${opts.url}\n\nIf you didn't request this, ignore this email.`;
+  const text = `Sign in to ProWo\n\nOpen this link to sign in (valid 15 minutes, single use):\n${opts.url}\n\nIf you didn't request this, ignore this email.`;
   return { subject, html, text };
 }
 

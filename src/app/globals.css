@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* -----------------------------------------------------------------------
- * Pablo Jobs theme tokens.
+ * ProWo theme tokens.
  * Light: pure white paper, deep black ink, vivid purple accent.
  * Dark: near-black paper, off-white ink, lighter purple for contrast.
  * Tokens are RGB triplets so Tailwind's alpha modifiers (/50, /80) work.

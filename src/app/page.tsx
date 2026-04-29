@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 
 export default function LandingPage() {
   return (
@@ -14,7 +15,7 @@ export default function LandingPage() {
             <span className="text-accent">crypto & finance</span>.
           </h1>
           <p className="text-lg text-muted mt-6 leading-relaxed max-w-2xl">
-            Pablo Jobs connects top talent with the fastest-growing companies in crypto, fintech, and global finance.
+            ProWo (Proof of Work) connects top talent with the fastest-growing companies in crypto, fintech, and global finance.
             No spam. No outdated listings. Just real opportunities from real companies.
           </p>
 
@@ -147,10 +148,7 @@ export default function LandingPage() {
       <footer className="border-t border-line">
         <div className="max-w-5xl mx-auto px-6 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-sm text-muted">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-accent flex items-center justify-center text-white text-[10px] font-bold">
-              PJ
-            </div>
-            <span className="font-semibold text-ink">Pablo Jobs</span>
+            <Logo size={22} />
           </div>
           <div className="text-xs">Built for the next generation of finance.</div>
           <div className="flex gap-4 text-xs">

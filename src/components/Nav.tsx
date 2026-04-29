@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { ThemeToggle } from "./ThemeToggle";
+import { Logo } from "./Logo";
 
 export async function Nav() {
   const user = await getSessionUser().catch(() => null);
@@ -9,10 +10,7 @@ export async function Nav() {
     <nav className="border-b border-line bg-paper/80 backdrop-blur">
       <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center text-white text-[11px] font-bold tracking-tight shadow-soft">
-            PJ
-          </div>
-          <span className="font-semibold text-ink tracking-tight">Pablo Jobs</span>
+          <Logo size={28} />
           <span className="text-[10px] uppercase tracking-widest text-muted ml-1">alpha</span>
         </Link>
         <div className="flex items-center gap-4 text-sm">

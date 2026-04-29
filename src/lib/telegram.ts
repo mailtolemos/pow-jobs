@@ -154,7 +154,7 @@ export async function broadcastTestMessage(): Promise<{ ok: boolean; error?: str
   if (!token) return { ok: false, error: "no bot token configured" };
   const chatId = await getBroadcastChatId();
   if (!chatId) return { ok: false, error: "no broadcast chat id configured" };
-  const text = `<b>✅ Pablo Jobs broadcast test</b>\nThis chat is wired up. New roles will land here automatically.\n<i>${new Date().toISOString()}</i>`;
+  const text = `<b>✅ ProWo broadcast test</b>\nThis chat is wired up. New roles will land here automatically.\n<i>${new Date().toISOString()}</i>`;
   const res = await sendTelegramMessage(chatId, text, { parseMode: "HTML" });
   return { ...res, chatId };
 }

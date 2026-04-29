@@ -1,4 +1,4 @@
-// Classify an IncomingJob into Pablo Jobs' opinionated Job shape.
+// Classify an IncomingJob into ProWo's opinionated Job shape.
 // Uses Claude when available to infer domain/seniority/tech_stack/etc.,
 // and falls back to crude heuristics so ingest never fully blocks on LLM.
 
@@ -112,7 +112,7 @@ function heuristicClassify(inc: IncomingJob): Partial<Job> {
 
 // --- Claude-backed classification -------------------------------------------
 
-const SYSTEM = `You classify a single job posting into a strict JSON schema used by a crypto+finance jobs board called Pablo Jobs. Return JSON ONLY, no prose.
+const SYSTEM = `You classify a single job posting into a strict JSON schema used by a crypto+finance jobs board called ProWo. Return JSON ONLY, no prose.
 
 Schema (all fields required, use null only where marked nullable):
 {

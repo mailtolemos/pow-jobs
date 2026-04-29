@@ -102,7 +102,7 @@ export function CronInfoPanel() {
       <div className="mt-4 grid gap-2.5">
         <Field label="Title">
           <code className="bg-paper border border-line rounded px-2 py-1 text-xs font-mono text-ink/80">
-            Pablo Jobs ingest
+            ProWo ingest
           </code>
         </Field>
 

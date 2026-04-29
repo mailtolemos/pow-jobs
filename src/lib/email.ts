@@ -68,10 +68,10 @@ export function renderDigestHTML(input: DigestInput): string {
 
   return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>Your weekly Pablo Jobs digest</title></head>
+<head><meta charset="utf-8"><title>Your weekly ProWo digest</title></head>
 <body style="margin: 0; padding: 0; background: #FAFAF7; font-family: -apple-system, 'Segoe UI', Roboto, Inter, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; padding: 32px 20px;">
-    <div style="font-size: 11px; letter-spacing: 0.1em; color: #5A6578; text-transform: uppercase; margin-bottom: 8px;">Pablo Jobs · Week of ${escapeHTML(weekOf.slice(0, 10))}</div>
+    <div style="font-size: 11px; letter-spacing: 0.1em; color: #5A6578; text-transform: uppercase; margin-bottom: 8px;">ProWo · Week of ${escapeHTML(weekOf.slice(0, 10))}</div>
     <h1 style="font-size: 22px; font-weight: 700; color: #0B1220; margin: 0 0 6px;">${sentCount} ${sentCount === 1 ? "match" : "matches"} worth your time, ${escapeHTML(candidate.display_name)}.</h1>
     <p style="font-size: 14px; color: #5A6578; margin: 0 0 24px; line-height: 1.5;">We scored every open role against your profile. Showing ${sentCount} of ${totalQualified} that cleared your precision floor (${Math.round(thresholdUsed * 100)}%). No noise.</p>
     ${cards}
@@ -89,7 +89,7 @@ function renderSilenceHTML(candidate: Candidate, weekOf: string, threshold: numb
 <head><meta charset="utf-8"><title>No matches this week</title></head>
 <body style="margin: 0; padding: 0; background: #FAFAF7; font-family: -apple-system, 'Segoe UI', Roboto, Inter, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; padding: 32px 20px;">
-    <div style="font-size: 11px; letter-spacing: 0.1em; color: #5A6578; text-transform: uppercase; margin-bottom: 8px;">Pablo Jobs · Week of ${escapeHTML(weekOf.slice(0, 10))}</div>
+    <div style="font-size: 11px; letter-spacing: 0.1em; color: #5A6578; text-transform: uppercase; margin-bottom: 8px;">ProWo · Week of ${escapeHTML(weekOf.slice(0, 10))}</div>
     <h1 style="font-size: 22px; font-weight: 700; color: #0B1220; margin: 0 0 12px;">Nothing cleared your bar this week, ${escapeHTML(candidate.display_name)}.</h1>
     <p style="font-size: 14px; color: #5A6578; line-height: 1.6; margin: 0 0 20px;">
       We scored every new role that came in — none crossed your precision floor of ${Math.round(threshold * 100)}%. We'd rather send silence than noise.

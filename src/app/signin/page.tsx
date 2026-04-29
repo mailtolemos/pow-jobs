@@ -50,7 +50,7 @@ function SigninInner() {
   return (
     <div className="max-w-md mx-auto px-6 py-20">
       <div className="text-center mb-8">
-        <div className="text-[11px] uppercase tracking-[0.14em] text-muted mb-2">Pablo Jobs</div>
+        <div className="text-[11px] uppercase tracking-[0.14em] text-muted mb-2">ProWo</div>
         <h1 className="text-3xl font-bold text-ink">Sign in</h1>
         <p className="text-muted mt-2 text-sm">
           Enter your email and we&rsquo;ll send you a one-time sign-in link. No passwords.

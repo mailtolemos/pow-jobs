@@ -4,8 +4,8 @@ import { JobsBrowseClient } from "./JobsBrowseClient";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Browse jobs — Pablo Jobs",
-  description: "Every open role in crypto, fintech, and global finance on Pablo Jobs.",
+  title: "Browse jobs — ProWo",
+  description: "Every open role in crypto, fintech, and global finance on ProWo.",
 };
 
 export default async function JobsBrowsePage() {
