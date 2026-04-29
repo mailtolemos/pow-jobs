@@ -92,10 +92,10 @@ function renderSilenceHTML(candidate: Candidate, weekOf: string, threshold: numb
     <div style="font-size: 11px; letter-spacing: 0.1em; color: #5A6578; text-transform: uppercase; margin-bottom: 8px;">ProWo · Week of ${escapeHTML(weekOf.slice(0, 10))}</div>
     <h1 style="font-size: 22px; font-weight: 700; color: #0B1220; margin: 0 0 12px;">Nothing cleared your bar this week, ${escapeHTML(candidate.display_name)}.</h1>
     <p style="font-size: 14px; color: #5A6578; line-height: 1.6; margin: 0 0 20px;">
-      We scored every new role that came in — none crossed your precision floor of ${Math.round(threshold * 100)}%. We'd rather send silence than noise.
+      We scored every new role that came in. None crossed your precision floor of ${Math.round(threshold * 100)}%. We'd rather send silence than noise.
     </p>
     <p style="font-size: 14px; color: #5A6578; line-height: 1.6; margin: 0 0 20px;">
-      Want more? Broaden your filters, lower your comp floor, or expand your jurisdictions — we'll pick up the signal.
+      Want more? Broaden your filters, lower your comp floor, or expand your jurisdictions, and we'll pick up the signal.
     </p>
     <a href="#" style="display: inline-block; font-size: 13px; font-weight: 600; color: #ffffff; background: #B88A42; padding: 10px 16px; border-radius: 8px; text-decoration: none;">Adjust preferences</a>
   </div>

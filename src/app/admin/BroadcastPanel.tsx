@@ -94,7 +94,7 @@ export function BroadcastPanel() {
       <div className="flex items-baseline justify-between gap-3 flex-wrap mb-4">
         <h2 className="text-xl font-semibold text-ink">Telegram broadcast</h2>
         <span className="text-xs text-muted">
-          New jobs auto-post to this chat. Configure both fields here — no Vercel redeploy needed.
+          New jobs auto-post to this chat. Configure both fields here, no Vercel redeploy needed.
         </span>
       </div>
 

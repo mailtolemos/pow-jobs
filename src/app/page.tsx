@@ -44,7 +44,7 @@ export default function LandingPage() {
               <span className="text-line">·</span>
               <span>Updated daily</span>
               <span className="text-line">·</span>
-              <span>Tech, crypto, finance — one feed</span>
+              <span>Tech, crypto, finance, one feed</span>
             </div>
           </div>
 
@@ -79,12 +79,12 @@ export default function LandingPage() {
           <ValueProp
             icon="⚡"
             title="Curated Roles"
-            body="Only high-quality opportunities from vetted companies. Every listing is parsed into a real schema — comp bands, equity / token upside, jurisdiction, vesting, dealbreakers."
+            body="Only high-quality opportunities from vetted companies. Every listing is parsed into a real schema: comp bands, equity / token upside, jurisdiction, vesting, dealbreakers."
           />
           <ValueProp
             icon="🌍"
             title="Global & Remote"
-            body="Work from anywhere. Markets don't sleep — and neither do opportunities. From Lisbon to Lagos, Tokyo to Toronto."
+            body="Work from anywhere. Markets don't sleep, and neither do opportunities. From Lisbon to Lagos, Tokyo to Toronto."
           />
           <ValueProp
             icon="📈"
@@ -102,15 +102,14 @@ export default function LandingPage() {
               For candidates
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-ink tracking-tight leading-tight">
-              Don&rsquo;t just get a job &mdash; get an edge.
+              Don&rsquo;t just get a job. Get an edge.
             </h2>
             <p className="text-muted mt-5 leading-relaxed">
               Discover roles across engineering, AI &amp; ML, quant research, trading, product, design,
-              data, marketing, business, legal &amp; compliance, and operations &mdash; spanning tech and
-              AI labs, crypto and Web3, fintech, banking, hedge funds, prop shops, and global finance.
-              We score every open role against your real preferences &mdash; comp floor, jurisdiction,
-              domain, equity / token upside, dealbreakers &mdash; and only send you what&rsquo;s actually
-              worth your time.
+              data, marketing, business, legal &amp; compliance, and operations, spanning tech and AI
+              labs, crypto and Web3, fintech, banking, hedge funds, prop shops, and global finance.
+              We score every open role against your real preferences (comp floor, jurisdiction, domain,
+              equity / token upside, dealbreakers) and only send you what&rsquo;s actually worth your time.
             </p>
             <div className="mt-6 flex gap-3">
               <Link
@@ -130,7 +129,7 @@ export default function LandingPage() {
           <div className="grid gap-3">
             <Bullet text="One feed for the highest-signal roles in tech, crypto & finance." />
             <Bullet text="Stop scrolling job boards. Start finding signal." />
-            <Bullet text="Silence when there's nothing good — not a filler list." />
+            <Bullet text="Silence when there's nothing good. Not a filler list." />
             <Bullet text="Pseudonymous profiles welcome. Your wallet can be your resume." />
           </div>
         </div>
@@ -147,7 +146,7 @@ export default function LandingPage() {
               Hire people who already speak the language.
             </h2>
             <p className="text-muted mt-5 leading-relaxed">
-              Reach a targeted pool of candidates who understand tech, crypto, and finance &mdash; no noise,
+              Reach a targeted pool of candidates who understand tech, crypto, and finance. No noise,
               just signal. Submit a role in two minutes; we classify it, rank it against real candidate
               profiles, and only surface it to people it actually fits.
             </p>
@@ -167,7 +166,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="md:order-1 grid gap-3">
-            <Bullet text="Ashby, Greenhouse, Lever, RSS, custom HTML — we ingest it all." />
+            <Bullet text="Ashby, Greenhouse, Lever, RSS, custom HTML: we ingest it all." />
             <Bullet text="Every role classified: domain, seniority, tech stack, equity / token upside." />
             <Bullet text="LLM-judged matches so your listing only reaches the right people." />
             <Bullet text="Daily email + Telegram alerts hit candidates where they already are." />

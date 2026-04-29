@@ -39,7 +39,7 @@ export function CronInfoPanel() {
   }, []);
 
   async function rotate() {
-    if (!confirm("Rotate the cron secret? Any existing cron-job.org configs using the old value will start failing — update them with the new URL after.")) return;
+    if (!confirm("Rotate the cron secret? Any existing cron-job.org configs using the old value will start failing. Update them with the new URL after.")) return;
     setBusy(true);
     setMsg(null);
     try {
@@ -66,7 +66,7 @@ export function CronInfoPanel() {
       await navigator.clipboard.writeText(fullUrl);
       setMsg("Copied. Paste into cron-job.org's URL field.");
     } catch {
-      setMsg("Copy failed — select + copy the revealed URL manually.");
+      setMsg("Copy failed. Select + copy the revealed URL manually.");
     }
   }
 
@@ -90,7 +90,7 @@ export function CronInfoPanel() {
           >
             cron-job.org
           </a>{" "}
-          (just an email — no card).
+          (just an email, no card).
         </li>
         <li>After login, click <b>Create cronjob</b> in the top-right.</li>
         <li>
@@ -127,7 +127,7 @@ export function CronInfoPanel() {
             </button>
           </div>
           <div className="text-[11px] text-muted mt-1">
-            Includes the secret already — just click <b>Copy URL</b> and paste into
+            Includes the secret already, just click <b>Copy URL</b> and paste into
             cron-job.org. {data?.source === "db" && data.generated && "Auto-generated and saved on first load."}{" "}
             <button
               onClick={rotate}
@@ -156,7 +156,7 @@ export function CronInfoPanel() {
             Each tick processes the single source with the oldest{" "}
             <code>last_checked_at</code> and claims it up-front to prevent
             overlapping ticks from double-processing. With 60 sources, you cycle
-            through every ~2 hours — fast enough for fresh roles, slow enough
+            through every ~2 hours: fast enough for fresh roles, slow enough
             to comfortably stay under Groq rate limits.
           </div>
         </Field>
@@ -165,12 +165,12 @@ export function CronInfoPanel() {
           <code className="bg-paper border border-line rounded px-2 py-1 text-xs font-mono text-ink/80">
             GET
           </code>{" "}
-          <span className="text-[11px] text-muted">(default — no change needed)</span>
+          <span className="text-[11px] text-muted">(default, no change needed)</span>
         </Field>
 
         <Field label="Notifications">
           <span className="text-xs text-muted">
-            Optional — cron-job.org can email you on failures. Leave at default if you don&rsquo;t care.
+            Optional. cron-job.org can email you on failures. Leave at default if you don&rsquo;t care.
           </span>
         </Field>
 

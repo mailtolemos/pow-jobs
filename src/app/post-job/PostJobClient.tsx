@@ -88,18 +88,18 @@ const FUNCTIONS = [
 ];
 
 const SENIORITIES = [
-  ["ic1", "IC1 — Intern"],
-  ["ic2", "IC2 — Junior"],
-  ["ic3", "IC3 — Mid"],
-  ["ic4", "IC4 — Senior"],
-  ["ic5", "IC5 — Staff"],
-  ["ic6", "IC6 — Principal"],
-  ["ic7", "IC7 — Distinguished"],
-  ["m1", "M1 — Team Lead"],
-  ["m2", "M2 — Manager"],
-  ["m3", "M3 — Sr. Manager"],
-  ["m4", "M4 — Director"],
-  ["m5", "M5 — VP / Head"],
+  ["ic1", "IC1 · Intern"],
+  ["ic2", "IC2 · Junior"],
+  ["ic3", "IC3 · Mid"],
+  ["ic4", "IC4 · Senior"],
+  ["ic5", "IC5 · Staff"],
+  ["ic6", "IC6 · Principal"],
+  ["ic7", "IC7 · Distinguished"],
+  ["m1", "M1 · Team Lead"],
+  ["m2", "M2 · Manager"],
+  ["m3", "M3 · Sr. Manager"],
+  ["m4", "M4 · Director"],
+  ["m5", "M5 · VP / Head"],
 ];
 
 const STAGES = [
@@ -220,7 +220,7 @@ export function PostJobClient({ submitterEmail }: Props) {
         </Field>
       </div>
 
-      <Field label="Job description" required hint="Plain text or HTML — we'll clean it up.">
+      <Field label="Job description" required hint="Plain text or HTML, we'll clean it up.">
         <textarea
           required
           rows={10}
@@ -228,7 +228,7 @@ export function PostJobClient({ submitterEmail }: Props) {
           maxLength={20000}
           value={state.description}
           onChange={(e) => update("description", e.target.value)}
-          placeholder="What the role does, what you're looking for, what makes the team great…"
+          placeholder="What the role does, what you're looking for, what makes the team great..."
           className={`${inputCls} font-sans`}
         />
       </Field>

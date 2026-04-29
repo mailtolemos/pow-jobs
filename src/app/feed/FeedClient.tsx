@@ -106,7 +106,7 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
           <p className="text-muted mt-1 text-sm">
             {mode === "me"
               ? "Live matching against the profile you saved. Tune it anytime from your profile page."
-              : "Live matching against a demo persona — sign in to see matches for your real profile."}
+              : "Live matching against a demo persona. Sign in to see matches for your real profile."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
@@ -123,7 +123,7 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
       {signedInAs && profileIncomplete && mode === "me" && (
         <div className="mb-5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900 flex items-center justify-between">
           <span>
-            Your profile is still mostly empty — pick at least a domain, function, and headline so the engine
+            Your profile is still mostly empty. Pick at least a domain, function, and headline so the engine
             can score meaningfully.
           </span>
           <Link href="/profile" className="ml-4 font-semibold underline whitespace-nowrap">
@@ -202,7 +202,7 @@ export function FeedClient({ signedInAs, myCandidate, profileIncomplete, demoPer
               label="Comp floor"
               value={viewingCandidate.comp_floor_usd > 0 ? `$${(viewingCandidate.comp_floor_usd / 1000).toFixed(0)}k` : "not set"}
             />
-            <Info label="Jurisdictions" value={viewingCandidate.jurisdiction_ok.join(", ") || "—"} />
+            <Info label="Jurisdictions" value={viewingCandidate.jurisdiction_ok.join(", ") || "-"} />
             <Info
               label="Token weight"
               value={`${Math.round(viewingCandidate.weight_token_upside * 100)}%`}

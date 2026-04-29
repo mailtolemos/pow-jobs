@@ -31,7 +31,7 @@ export function TelegramCTA({ variant = "button", className = "", label }: Props
             {label ?? "Get every new role in your Telegram."}
           </div>
           <div className="text-xs text-muted mt-0.5">
-            Join the ProWo channel — new approved tech, crypto &amp; finance roles, pushed the moment they go live.
+            Join the ProWo channel for new approved tech, crypto &amp; finance roles, pushed the moment they go live.
           </div>
         </div>
         <span className="inline-flex items-center gap-1 rounded-lg bg-[#26A5E4] text-white px-3 py-1.5 text-xs font-semibold shrink-0 group-hover:brightness-110 transition whitespace-nowrap">

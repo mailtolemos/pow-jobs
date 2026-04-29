@@ -135,7 +135,7 @@ export function AdminSourcesClient({ initial }: Props) {
       await refresh();
       alert(
         `Added ${data.added} new sources (${data.skipped} already existed). ` +
-          `${data.errors.length > 0 ? `${data.errors.length} failed — see console.` : ""}`,
+          `${data.errors.length > 0 ? `${data.errors.length} failed. See console.` : ""}`,
       );
       if (data.errors.length > 0) console.warn(`seed-${kind} errors:`, data.errors);
     } catch (e) {
@@ -254,7 +254,7 @@ export function AdminSourcesClient({ initial }: Props) {
           )}
           <div className="text-xs mt-1">
             {lastReport.broadcast_configured === false ? (
-              <>📡 Telegram broadcast <b>not configured</b> — set the chat ID + bot token in the panel above.</>
+              <>📡 Telegram broadcast <b>not configured</b>. Set the chat ID + bot token in the panel above.</>
             ) : (
               <>📡 Telegram: sent {lastReport.broadcast_sent ?? 0} / {lastReport.created} new roles.</>
             )}

@@ -5,24 +5,24 @@ import type { Candidate } from "@/lib/types";
 import type { CandidateExtras } from "@/lib/db";
 
 const DOMAINS: Array<[string, string]> = [
-  ["crypto:defi", "Crypto — DeFi"],
-  ["crypto:infra", "Crypto — Infra / MEV"],
-  ["crypto:l1", "Crypto — L1"],
-  ["crypto:l2", "Crypto — L2"],
-  ["crypto:application", "Crypto — Apps"],
-  ["crypto:analytics", "Crypto — Analytics"],
-  ["crypto:trading", "Crypto — Trading"],
-  ["crypto:security", "Crypto — Security"],
-  ["finance:systematic", "Finance — Systematic"],
-  ["finance:discretionary", "Finance — Discretionary"],
-  ["finance:macro", "Finance — Macro"],
-  ["finance:credit", "Finance — Credit"],
-  ["finance:equities", "Finance — Equities"],
-  ["finance:fi", "Finance — Fixed Income"],
-  ["finance:hft", "Finance — HFT"],
-  ["finance:prop", "Finance — Prop"],
-  ["finance:hedgefund", "Finance — Hedge fund"],
-  ["finance:banking", "Finance — Banking"],
+  ["crypto:defi", "Crypto · DeFi"],
+  ["crypto:infra", "Crypto · Infra / MEV"],
+  ["crypto:l1", "Crypto · L1"],
+  ["crypto:l2", "Crypto · L2"],
+  ["crypto:application", "Crypto · Apps"],
+  ["crypto:analytics", "Crypto · Analytics"],
+  ["crypto:trading", "Crypto · Trading"],
+  ["crypto:security", "Crypto · Security"],
+  ["finance:systematic", "Finance · Systematic"],
+  ["finance:discretionary", "Finance · Discretionary"],
+  ["finance:macro", "Finance · Macro"],
+  ["finance:credit", "Finance · Credit"],
+  ["finance:equities", "Finance · Equities"],
+  ["finance:fi", "Finance · Fixed Income"],
+  ["finance:hft", "Finance · HFT"],
+  ["finance:prop", "Finance · Prop"],
+  ["finance:hedgefund", "Finance · Hedge fund"],
+  ["finance:banking", "Finance · Banking"],
   ["fintech", "Fintech"],
 ];
 
@@ -39,18 +39,18 @@ const FUNCTIONS: Array<[string, string]> = [
 ];
 
 const SENIORITY: Array<[string, string]> = [
-  ["ic1", "IC1 — Junior"],
+  ["ic1", "IC1 · Junior"],
   ["ic2", "IC2"],
-  ["ic3", "IC3 — Mid"],
-  ["ic4", "IC4 — Senior"],
-  ["ic5", "IC5 — Staff"],
-  ["ic6", "IC6 — Principal"],
-  ["ic7", "IC7 — Distinguished"],
-  ["m1", "M1 — Manager"],
-  ["m2", "M2 — Sr. Manager"],
-  ["m3", "M3 — Director"],
-  ["m4", "M4 — Sr. Director"],
-  ["m5", "M5 — VP+"],
+  ["ic3", "IC3 · Mid"],
+  ["ic4", "IC4 · Senior"],
+  ["ic5", "IC5 · Staff"],
+  ["ic6", "IC6 · Principal"],
+  ["ic7", "IC7 · Distinguished"],
+  ["m1", "M1 · Manager"],
+  ["m2", "M2 · Sr. Manager"],
+  ["m3", "M3 · Director"],
+  ["m4", "M4 · Sr. Director"],
+  ["m5", "M5 · VP+"],
 ];
 
 const JURISDICTIONS: Array<[string, string]> = [
@@ -131,7 +131,7 @@ export function ProfileEditor({ userEmail, candidate, extras, telegramBotUsernam
       });
       const j = (await res.json()) as { ok: boolean; patch?: Partial<FormState>; error?: string };
       if (!j.ok || !j.patch) {
-        setToast({ kind: "err", msg: j.error || "Couldn't parse that — try more text." });
+        setToast({ kind: "err", msg: j.error || "Couldn't parse that. Try more text." });
         return;
       }
       setState((s) => ({ ...s, ...j.patch } as FormState));
@@ -247,7 +247,7 @@ export function ProfileEditor({ userEmail, candidate, extras, telegramBotUsernam
               className={inputCls}
             />
           </Field>
-          <Field label="Farcaster / ENS" hint="Optional — pseudonymous signal carries weight here.">
+          <Field label="Farcaster / ENS" hint="Optional. Pseudonymous signal carries weight here.">
             <input
               type="text"
               value={state.farcaster_handle ?? ""}
@@ -277,7 +277,7 @@ export function ProfileEditor({ userEmail, candidate, extras, telegramBotUsernam
               onChange={(e) => setImportText(e.target.value)}
               rows={8}
               className={inputCls + " font-mono text-xs"}
-              placeholder="Founding Engineer at Acme Labs (2021 — now)&#10;Previously Staff Engineer at Bank of X (2017–2021)&#10;About: built low-latency MEV bots, 8 YoE in Rust + Solidity..."
+              placeholder="Founding Engineer at Acme Labs (2021 to now)&#10;Previously Staff Engineer at Bank of X (2017-2021)&#10;About: built low-latency MEV bots, 8 YoE in Rust + Solidity..."
             />
             <div className="mt-2 flex gap-2">
               <button
@@ -359,7 +359,7 @@ export function ProfileEditor({ userEmail, candidate, extras, telegramBotUsernam
 
       {/* Interests */}
       <Section title="What you want" subtitle="Pick every domain and function you're open to. Precision over breadth.">
-        <Field label="Domains of interest" hint="Multi-select — direct hits score highest, adjacent family still scores well.">
+        <Field label="Domains of interest" hint="Multi-select. Direct hits score highest, adjacent family still scores well.">
           <ChipGroup
             options={DOMAINS}
             selected={state.domains_of_interest}
@@ -384,7 +384,7 @@ export function ProfileEditor({ userEmail, candidate, extras, telegramBotUsernam
       </Section>
 
       {/* Hard filters */}
-      <Section title="Hard filters" subtitle="Anything that fails here is auto-excluded — no LLM, no exceptions.">
+      <Section title="Hard filters" subtitle="Anything that fails here is auto-excluded. No LLM, no exceptions.">
         <div className="grid md:grid-cols-2 gap-4">
           <Field label="Comp floor (USD, base)" hint="Roles whose max base is below this floor are dropped.">
             <input
@@ -481,8 +481,8 @@ export function ProfileEditor({ userEmail, candidate, extras, telegramBotUsernam
               onChange={(e) => update("alert_email_enabled", e.target.value === "on")}
               className={inputCls}
             >
-              <option value="on">Yes — send digests</option>
-              <option value="off">No — I&rsquo;ll check the feed</option>
+              <option value="on">Yes, send digests</option>
+              <option value="off">No, I&rsquo;ll check the feed</option>
             </select>
           </Field>
           <Field label="Frequency">

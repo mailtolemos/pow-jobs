@@ -38,7 +38,7 @@ function formatJobForTelegram(job: Job, match: MatchScore): string {
   const tokenNote = job.token_pct_target ? `, ${job.token_pct_target}% token` : "";
   const url = job.source_url;
   return (
-    `<b>${escapeTg(job.title_raw)}</b> — <i>${escapeTg(job.employer)}</i>\n` +
+    `<b>${escapeTg(job.title_raw)}</b> · <i>${escapeTg(job.employer)}</i>\n` +
     `${escapeTg(job.location)} · ${escapeTg(job.remote_policy)}\n` +
     `${escapeTg(comp)}${escapeTg(tokenNote)}\n` +
     `<b>${pct}% match</b>: ${escapeTg(match.rationale)}\n\n` +
@@ -109,7 +109,7 @@ export async function dispatchAlertsForCandidate(
     });
     const subject =
       emailFresh.length === 1
-        ? `1 match worth your time — ${emailFresh[0].job.title_raw}`
+        ? `1 match worth your time: ${emailFresh[0].job.title_raw}`
         : `${emailFresh.length} matches worth your time`;
     const send = await sendMail({
       to: candidate.user_email,
@@ -132,7 +132,7 @@ export async function dispatchAlertsForCandidate(
       tgFresh.length === 1
         ? "<b>1 new role</b> worth your time:\n\n"
         : `<b>${tgFresh.length} new roles</b> worth your time:\n\n`;
-    const separator = "\n\n— — — — —\n\n";
+    const separator = "\n\n· · · · ·\n\n";
     const body = tgFresh.map(({ match, job }) => formatJobForTelegram(job, match)).join(separator);
     const footer = `\n\n<i>Sent by ProWo · <a href="${getAppUrl()}/profile">manage alerts</a></i>`;
     const tg = await sendTelegramMessage(candidate.telegram_chat_id, header + body + footer, {

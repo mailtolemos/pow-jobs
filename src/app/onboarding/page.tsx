@@ -4,13 +4,13 @@ const STEPS = [
   {
     k: "identity",
     title: "1. Identity mode",
-    body: "Real name, pseudonym (Farcaster / ENS), or wallet-first. We treat all three as equal citizens — pseudonymous candidates should not be second class.",
+    body: "Real name, pseudonym (Farcaster / ENS), or wallet-first. We treat all three as equal citizens. Pseudonymous candidates should not be second class.",
     demo: "Demo candidates: 0xHaru (pseudonym), Priya Chen (real), Marco Ferrari (real).",
   },
   {
     k: "signals",
     title: "2. Verifiable signals",
-    body: "Optional: link GitHub, Farcaster, LinkedIn, a public wallet, or upload a PDF offer letter (your last comp anchor — never shared, used only to calibrate your comp floor).",
+    body: "Optional: link GitHub, Farcaster, LinkedIn, a public wallet, or upload a PDF offer letter (your last comp anchor, never shared, used only to calibrate your comp floor).",
     demo: "Seeded candidates include a mix of LinkedIn and GitHub URLs; offer upload is simulated.",
   },
   {
@@ -34,7 +34,7 @@ const STEPS = [
   {
     k: "digest",
     title: "6. Digest cadence",
-    body: "Weekly by default. With precision floor on, you'll sometimes get zero matches — that's correct behavior, not a bug.",
+    body: "Weekly by default. With precision floor on, you'll sometimes get zero matches. That's correct behavior, not a bug.",
     demo: "See /email-preview for a rendered weekly digest and a 'no matches' week.",
   },
 ];
@@ -45,8 +45,8 @@ export default function OnboardingPage() {
       <div className="text-[11px] uppercase tracking-[0.2em] text-muted mb-3">Onboarding walkthrough</div>
       <h1 className="text-4xl font-bold text-ink">Six steps. No forms for forms' sake.</h1>
       <p className="text-muted mt-3 leading-relaxed">
-        We ask once, deeply — then we stop asking. Every answer feeds a structured schema that the matching engine uses
-        forever. This page shows what onboarding covers in the real product, with examples from the demo candidates.
+        We ask once, deeply, and then we stop asking. Every answer feeds a structured schema that the matching engine
+        uses forever. This page shows what onboarding covers in the real product, with examples from the demo candidates.
       </p>
 
       <div className="mt-10 space-y-6">

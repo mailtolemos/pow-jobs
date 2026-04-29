@@ -17,7 +17,7 @@ export default async function EmailPreviewPage({ searchParams }: Props) {
   if (!activeId) {
     return (
       <div className="max-w-3xl mx-auto px-4 md:px-6 py-16">
-        <div className="text-muted">No candidates in the database — run <code>npm run seed</code>.</div>
+        <div className="text-muted">No candidates in the database. Run <code>npm run seed</code>.</div>
       </div>
     );
   }

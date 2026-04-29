@@ -13,7 +13,7 @@ import { TelegramCTA } from "@/components/TelegramCTA";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Post a job — ProWo",
+  title: "Post a job · ProWo",
   description: "Submit a role. Reviewed by a human, then matched to candidates.",
 };
 
@@ -76,7 +76,7 @@ export default async function PostJobPage() {
           <span className="text-base mt-0.5" aria-hidden>ℹ︎</span>
           <div>
             You&rsquo;re signed in as a candidate account. You can still submit roles, but if you&rsquo;re
-            here for hiring you may prefer a dedicated company account &mdash; sign out and use
+            here for hiring you may prefer a dedicated company account. Sign out and use
             {" "}
             <Link href="/signin?as=company&next=/post-job" className="underline font-semibold">
               the &ldquo;I&rsquo;m hiring&rdquo; flow
@@ -122,7 +122,7 @@ export default async function PostJobPage() {
                     <td className="px-4 py-2.5 text-muted text-xs">
                       {row.submitted_at
                         ? new Date(row.submitted_at).toLocaleString()
-                        : "—"}
+                        : "-"}
                     </td>
                   </tr>
                 ))}

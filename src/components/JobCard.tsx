@@ -10,7 +10,7 @@ interface Props {
 }
 
 function fmtK(n: number | null): string {
-  if (n == null) return "—";
+  if (n == null) return "-";
   return `$${(n / 1000).toFixed(0)}k`;
 }
 

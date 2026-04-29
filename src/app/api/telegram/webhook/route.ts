@@ -49,9 +49,9 @@ export async function POST(req: Request) {
       chatId,
       "👋 Hi! I'm the ProWo alert bot.\n\n" +
         "<b>Commands</b>\n" +
-        "• <code>/start &lt;code&gt;</code> — link this chat to your ProWo account (grab the code from Profile → Alerts)\n" +
-        "• <code>/chatid</code> — report this chat's ID (used when setting up the broadcast channel)\n" +
-        "• <code>/stop</code> — pause alerts\n\n" +
+        "• <code>/start &lt;code&gt;</code>: link this chat to your ProWo account (grab the code from Profile → Alerts)\n" +
+        "• <code>/chatid</code>: report this chat's ID (used when setting up the broadcast channel)\n" +
+        "• <code>/stop</code>: pause alerts\n\n" +
         "<b>Broadcast setup</b>\n" +
         "Add me to your jobs channel as an <b>admin</b> with permission to post, then send <code>/chatid</code> there. Put that ID into Vercel as <code>TELEGRAM_BROADCAST_CHAT_ID</code>.",
       { parseMode: "HTML" },

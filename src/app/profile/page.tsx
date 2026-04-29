@@ -31,7 +31,7 @@ export default async function ProfilePage() {
         <h1 className="text-3xl font-bold text-ink">Your profile</h1>
         <p className="text-muted mt-1 text-sm">
           This is what the matching engine reads to decide what lands in your feed and inbox.
-          Be specific — the more you tell it, the quieter and sharper the signal.
+          Be specific. The more you tell it, the quieter and sharper the signal.
         </p>
       </div>
       <ProfileEditor

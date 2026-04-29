@@ -5,7 +5,7 @@ import { TelegramCTA } from "@/components/TelegramCTA";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Browse jobs — ProWo",
+  title: "Browse jobs · ProWo",
   description:
     "Every open role in tech, AI, crypto, fintech, banking, trading, and global finance on ProWo.",
 };
@@ -23,7 +23,7 @@ export default async function JobsBrowsePage() {
             Every open role in tech, crypto &amp; finance.
           </h1>
           <p className="text-muted mt-2 text-sm max-w-2xl">
-            The full public catalogue — curated, filterable, updated daily. Sign in to get
+            The full public catalogue: curated, filterable, updated daily. Sign in to get
             personalized matches scored against your profile.
           </p>
         </div>

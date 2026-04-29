@@ -256,7 +256,7 @@ export function AdminUsersClient({ initial, meId, ownerEmails }: Props) {
                     )}
                   </td>
                   <td className="px-3 py-2">
-                    {u.candidate_display_name || <span className="text-muted/70">—</span>}
+                    {u.candidate_display_name || <span className="text-muted/70">-</span>}
                     {u.candidate_headline && (
                       <div className="text-[11px] text-muted truncate max-w-xs">
                         {u.candidate_headline}
@@ -291,7 +291,7 @@ export function AdminUsersClient({ initial, meId, ownerEmails }: Props) {
                     {u.approved_jobs_count > 0 && (
                       <span>{u.approved_jobs_count} live</span>
                     )}
-                    {u.pending_jobs_count === 0 && u.approved_jobs_count === 0 && "—"}
+                    {u.pending_jobs_count === 0 && u.approved_jobs_count === 0 && "-"}
                   </td>
                   <td className="px-3 py-2 text-xs text-muted">
                     {new Date(u.created_at).toLocaleDateString()}

@@ -20,7 +20,7 @@ export default async function AdminPage() {
   const fmtRel = (iso: string | null): string => {
     if (!iso) return "never";
     const ms = Date.now() - Date.parse(iso);
-    if (Number.isNaN(ms) || ms < 0) return "—";
+    if (Number.isNaN(ms) || ms < 0) return "-";
     const m = Math.floor(ms / 60000);
     if (m < 1) return "just now";
     if (m < 60) return `${m}m ago`;
