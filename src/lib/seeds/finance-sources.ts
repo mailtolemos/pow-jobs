@@ -80,4 +80,41 @@ export const FINANCE_SEED_SOURCES: SeedSource[] = [
   { name: "SoFi",                      url: "https://boards.greenhouse.io/sofi",                kind: "career-page", notes: "Consumer fintech" },
   { name: "eToro",                     url: "https://boards.greenhouse.io/etoro",               kind: "career-page", notes: "Social trading platform" },
   { name: "Coinmarketcap",             url: "https://boards.greenhouse.io/coinmarketcap",       kind: "career-page", notes: "Crypto data / Binance" },
+
+  // -------- More top-tier prop / quant / HFT --------
+  { name: "Susquehanna (SIG)",         url: "https://jobs.lever.co/susquehannainternational",   kind: "career-page", notes: "Options market making, prop" },
+  { name: "Five Rings",                url: "https://boards.greenhouse.io/fiverings",           kind: "career-page", notes: "Quant prop trading" },
+  { name: "PDT Partners",              url: "https://boards.greenhouse.io/pdtpartners",         kind: "career-page", notes: "Quant hedge fund (Morgan Stanley spinout)" },
+  { name: "Squarepoint Capital",       url: "https://boards.greenhouse.io/squarepoint",         kind: "career-page", notes: "Quant hedge fund" },
+  { name: "Voloridge Investment",      url: "https://jobs.lever.co/voloridge",                  kind: "career-page", notes: "Quant macro / equities" },
+  { name: "Headlands Tech",            url: "https://boards.greenhouse.io/headlandstechnologies", kind: "career-page", notes: "HFT / market making" },
+  { name: "Belvedere Trading",         url: "https://boards.greenhouse.io/belvederetrading",    kind: "career-page", notes: "Options prop, Chicago" },
+  { name: "Maven Securities",          url: "https://jobs.lever.co/mavensecurities",            kind: "career-page", notes: "London prop / market making" },
+
+  // -------- More hedge / asset managers --------
+  { name: "Marshall Wace",             url: "https://boards.greenhouse.io/marshallwace",        kind: "career-page", notes: "Multi-strategy hedge fund, London" },
+  { name: "ExodusPoint",               url: "https://boards.greenhouse.io/exoduspoint",         kind: "career-page", notes: "Multi-manager hedge fund" },
+  { name: "Schonfeld",                 url: "https://boards.greenhouse.io/schonfeld",           kind: "career-page", notes: "Multi-strategy hedge fund" },
+  { name: "Balyasny",                  url: "https://boards.greenhouse.io/balyasnyassetmanagement", kind: "career-page", notes: "Multi-strategy hedge fund" },
+  { name: "Capula Investment",         url: "https://boards.greenhouse.io/capulainvestment",    kind: "career-page", notes: "Macro / fixed income hedge fund" },
+  { name: "Brevan Howard",             url: "https://boards.greenhouse.io/brevanhoward",        kind: "career-page", notes: "Macro hedge fund" },
+
+  // -------- VCs / asset managers --------
+  { name: "a16z",                      url: "https://boards.greenhouse.io/a16z",                kind: "career-page", notes: "Andreessen Horowitz" },
+  { name: "Sequoia Capital",           url: "https://jobs.ashbyhq.com/sequoiacap",              kind: "career-page", notes: "Sequoia US" },
+  { name: "Founders Fund",             url: "https://jobs.lever.co/foundersfund",               kind: "career-page", notes: "Founders Fund VC" },
+  { name: "Lightspeed",                url: "https://boards.greenhouse.io/lightspeedventurepartners", kind: "career-page", notes: "Lightspeed Venture Partners" },
+  { name: "General Catalyst",          url: "https://boards.greenhouse.io/generalcatalyst",     kind: "career-page", notes: "GC VC" },
+  { name: "Pantera Capital",           url: "https://boards.greenhouse.io/panteracapital",      kind: "career-page", notes: "Crypto VC" },
+  { name: "Apollo",                    url: "https://boards.greenhouse.io/apolloglobalmanagement", kind: "career-page", notes: "Apollo Global Management" },
+  { name: "Carlyle",                   url: "https://boards.greenhouse.io/carlyle",             kind: "career-page", notes: "Private equity" },
+  { name: "Blackstone",                url: "https://boards.greenhouse.io/blackstone",          kind: "career-page", notes: "Alternative asset manager" },
+
+  // -------- More fintechs --------
+  { name: "Wise",                      url: "https://boards.greenhouse.io/wise",                kind: "career-page", notes: "Cross-border payments" },
+  { name: "Klarna",                    url: "https://boards.greenhouse.io/klarna",              kind: "career-page", notes: "BNPL" },
+  { name: "Adyen",                     url: "https://boards.greenhouse.io/adyen",               kind: "career-page", notes: "Payments" },
+  { name: "Checkout.com",              url: "https://boards.greenhouse.io/checkout",            kind: "career-page", notes: "Payments infrastructure" },
+  { name: "Modern Treasury",           url: "https://jobs.ashbyhq.com/moderntreasury",          kind: "career-page", notes: "Payment ops API" },
+  { name: "Tradeweb",                  url: "https://boards.greenhouse.io/tradeweb",            kind: "career-page", notes: "Electronic fixed-income trading" },
 ];

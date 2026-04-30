@@ -4,6 +4,9 @@
 import { detectAshbySlug, fetchAshby } from "./ashby";
 import { detectGreenhouseToken, fetchGreenhouse } from "./greenhouse";
 import { detectLeverSlug, fetchLever } from "./lever";
+import { detectWorkableSlug, fetchWorkable } from "./workable";
+import { detectSmartRecruitersSlug, fetchSmartRecruiters } from "./smartrecruiters";
+import { detectRecruiteeSlug, fetchRecruitee } from "./recruitee";
 import { fetchHtmlCareerPage } from "./html";
 import { classifyIncoming, classifyHeuristic } from "./classify";
 import type { IncomingJob, IngestResult } from "./types";
@@ -17,12 +20,23 @@ import {
 } from "../db";
 import { broadcastJob, isBroadcastConfigured } from "../telegram";
 
-export type AtsKind = "ashby" | "greenhouse" | "lever" | "html" | "unknown";
+export type AtsKind =
+  | "ashby"
+  | "greenhouse"
+  | "lever"
+  | "workable"
+  | "smartrecruiters"
+  | "recruitee"
+  | "html"
+  | "unknown";
 
 export function detectAts(url: string): AtsKind {
   if (detectAshbySlug(url)) return "ashby";
   if (detectGreenhouseToken(url)) return "greenhouse";
   if (detectLeverSlug(url)) return "lever";
+  if (detectWorkableSlug(url)) return "workable";
+  if (detectSmartRecruitersSlug(url)) return "smartrecruiters";
+  if (detectRecruiteeSlug(url)) return "recruitee";
   try {
     const u = new URL(url);
     if (/^https?:$/.test(u.protocol)) return "html";
@@ -42,6 +56,12 @@ async function fetchIncoming(source: SourceRow): Promise<IncomingJob[]> {
       return fetchGreenhouse(source.url, employer);
     case "lever":
       return fetchLever(source.url, employer);
+    case "workable":
+      return fetchWorkable(source.url, employer);
+    case "smartrecruiters":
+      return fetchSmartRecruiters(source.url, employer);
+    case "recruitee":
+      return fetchRecruitee(source.url, employer);
     case "html":
       return fetchHtmlCareerPage(source.url, employer);
     default:

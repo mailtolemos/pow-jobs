@@ -3,7 +3,7 @@ import { Logo } from "@/components/Logo";
 import { CompanyCarousel } from "@/components/CompanyCarousel";
 import { TelegramCTA } from "@/components/TelegramCTA";
 import { XCTA } from "@/components/XCTA";
-import { CONTACT_EMAIL, contactMailto } from "@/lib/contact";
+import { EmailCTA } from "@/components/EmailCTA";
 
 export default function LandingPage() {
   return (
@@ -195,12 +195,7 @@ export default function LandingPage() {
             </Link>
             <TelegramCTA variant="link" />
             <XCTA variant="link" />
-            <a
-              href={contactMailto("ProWo")}
-              className="hover:text-ink transition"
-            >
-              {CONTACT_EMAIL}
-            </a>
+            <EmailCTA variant="link" />
           </div>
         </div>
       </footer>

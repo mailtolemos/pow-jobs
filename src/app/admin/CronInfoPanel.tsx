@@ -70,6 +70,63 @@ export function CronInfoPanel() {
     }
   }
 
+  // Trigger one cron tick right now (admin-gated). Returns counts so we can
+  // tell the admin if the tick actually produced new jobs / broadcasts. The
+  // result also shows up in the Recent cron ticks panel below.
+  async function runNow() {
+    setBusy(true);
+    setMsg("Running one tick...");
+    try {
+      const r = await fetch("/api/admin/run-cron", { method: "POST" });
+      const j = (await r.json()) as {
+        ok?: boolean;
+        processed?: number;
+        total_created?: number;
+        total_broadcast?: number;
+        duration_ms?: number;
+        error?: string;
+      };
+      if (!r.ok || !j.ok) {
+        setMsg(`Run failed: ${j.error ?? `HTTP ${r.status}`}`);
+        return;
+      }
+      setMsg(
+        `Ran ${j.processed} sources in ${Math.round(
+          (j.duration_ms ?? 0) / 1000,
+        )}s · ${j.total_created ?? 0} new · ${j.total_broadcast ?? 0} broadcast.`,
+      );
+    } catch (e) {
+      setMsg(`Run error: ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function checkHealth() {
+    setBusy(true);
+    setMsg("Checking...");
+    try {
+      const r = await fetch("/api/cron/health", { cache: "no-store" });
+      const j = (await r.json()) as {
+        ok?: boolean;
+        secret_configured?: boolean;
+        broadcast_configured?: boolean;
+        active_sources?: number;
+        minutes_since_last_run?: number | null;
+      };
+      if (!r.ok || !j.ok) throw new Error(`HTTP ${r.status}`);
+      const since =
+        j.minutes_since_last_run == null ? "never" : `${j.minutes_since_last_run}m ago`;
+      setMsg(
+        `Health: secret ${j.secret_configured ? "OK" : "MISSING"} · broadcast ${j.broadcast_configured ? "OK" : "MISSING"} · ${j.active_sources ?? 0} active · last run ${since}.`,
+      );
+    } catch (e) {
+      setMsg(`Health check failed: ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section className="bg-surface border border-line rounded-xl p-5">
       <div className="flex items-baseline justify-between gap-3 flex-wrap mb-3">
@@ -181,8 +238,34 @@ export function CronInfoPanel() {
         </Field>
       </div>
 
+      {/* Quick diagnostics: hit health + run-now buttons so admins never
+          have to ssh-into-vercel-logs to figure out if the cron is alive. */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          onClick={runNow}
+          disabled={busy}
+          className="rounded-lg bg-accent text-white px-3 py-1.5 text-xs font-semibold disabled:opacity-50 hover:bg-accent2 transition"
+        >
+          Run cron tick now
+        </button>
+        <button
+          onClick={checkHealth}
+          disabled={busy}
+          className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink hover:border-accent transition disabled:opacity-50"
+        >
+          Check health
+        </button>
+        <button
+          onClick={rotate}
+          disabled={busy}
+          className="ml-auto rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-muted hover:text-ink hover:border-accent transition disabled:opacity-50"
+        >
+          Rotate secret
+        </button>
+      </div>
+
       {msg && (
-        <div className="mt-3 text-xs rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-emerald-900">
+        <div className="mt-3 text-xs rounded-lg bg-accent/10 border border-accent/30 px-3 py-2 text-ink">
           {msg}
         </div>
       )}

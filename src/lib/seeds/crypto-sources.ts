@@ -80,4 +80,43 @@ export const CRYPTO_SEED_SOURCES: SeedSource[] = [
   { name: "OKX",                 url: "https://boards.greenhouse.io/okx",                 kind: "career-page", notes: "Centralized exchange + Web3 wallet" },
   { name: "Argent",              url: "https://jobs.lever.co/argent",                     kind: "career-page", notes: "Smart wallets, StarkNet" },
   { name: "Status",              url: "https://jobs.lever.co/status",                     kind: "career-page", notes: "Messaging + wallet, Logos" },
+
+  // -------- More top-cap protocols + L2s --------
+  { name: "StarkWare",           url: "https://www.starkware.co/careers/",                kind: "career-page", notes: "STARK proofs, StarkNet" },
+  { name: "Matter Labs",         url: "https://jobs.lever.co/matter-labs",                kind: "career-page", notes: "zkSync" },
+  { name: "Scroll",              url: "https://jobs.lever.co/scroll",                     kind: "career-page", notes: "zkEVM L2" },
+  { name: "Optimism",            url: "https://boards.greenhouse.io/optimism",            kind: "career-page", notes: "OP Stack, Superchain" },
+  { name: "Arbitrum (Offchain Labs)", url: "https://jobs.lever.co/offchainlabs",          kind: "career-page", notes: "Arbitrum One / Nova / Orbit" },
+  { name: "Base (Coinbase)",     url: "https://boards.greenhouse.io/coinbase",            kind: "career-page", notes: "Same Coinbase board, Base team" },
+  { name: "Sui Foundation",      url: "https://jobs.ashbyhq.com/suifoundation",           kind: "career-page", notes: "SUI ecosystem" },
+  { name: "Mantle",              url: "https://jobs.lever.co/mantle",                     kind: "career-page", notes: "BitDAO L2" },
+  { name: "Linea (ConsenSys)",   url: "https://boards.greenhouse.io/consensys",           kind: "career-page", notes: "Linea zkEVM" },
+  { name: "Berachain",           url: "https://jobs.ashbyhq.com/berachain",               kind: "career-page", notes: "POL L1" },
+  { name: "Movement Labs",       url: "https://jobs.ashbyhq.com/movementlabs",            kind: "career-page", notes: "Move-based L2" },
+  { name: "Monad Labs",          url: "https://jobs.ashbyhq.com/monad",                   kind: "career-page", notes: "Parallel-EVM L1" },
+
+  // -------- More DeFi / DEX / lending --------
+  { name: "Compound Labs",       url: "https://jobs.lever.co/compoundlabs",               kind: "career-page", notes: "Money market protocol" },
+  { name: "Curve Finance",       url: "https://jobs.lever.co/curve",                      kind: "career-page", notes: "Stable AMM" },
+  { name: "GMX",                 url: "https://jobs.lever.co/gmx",                        kind: "career-page", notes: "Perp DEX" },
+  { name: "dYdX",                url: "https://boards.greenhouse.io/dydx",                kind: "career-page", notes: "Perp DEX" },
+  { name: "Pendle",              url: "https://jobs.ashbyhq.com/pendle",                  kind: "career-page", notes: "Yield trading" },
+  { name: "Morpho",              url: "https://jobs.ashbyhq.com/morpho",                  kind: "career-page", notes: "Lending optimizer" },
+  { name: "Uniswap Foundation",  url: "https://boards.greenhouse.io/uniswapfoundation",   kind: "career-page", notes: "UNI ecosystem" },
+
+  // -------- More tooling / infra / wallets --------
+  { name: "MetaMask (ConsenSys)", url: "https://boards.greenhouse.io/consensys",          kind: "career-page", notes: "Same ConsenSys board, MetaMask team" },
+  { name: "Safe",                url: "https://jobs.ashbyhq.com/safe",                    kind: "career-page", notes: "Multisig / smart accounts" },
+  { name: "Etherscan",           url: "https://etherscan.io/jobs",                        kind: "career-page", notes: "Block explorer (HTML)" },
+  { name: "Dune Analytics",      url: "https://jobs.lever.co/dune",                       kind: "career-page", notes: "Onchain analytics" },
+  { name: "Flashbots",           url: "https://jobs.ashbyhq.com/flashbots",               kind: "career-page", notes: "MEV / SUAVE" },
+
+  // -------- More exchanges / institutional --------
+  { name: "Bitget",              url: "https://jobs.lever.co/bitget",                     kind: "career-page", notes: "Centralized exchange" },
+  { name: "MEXC",                url: "https://jobs.lever.co/mexc",                       kind: "career-page", notes: "Centralized exchange" },
+  { name: "Hashkey",             url: "https://jobs.lever.co/hashkey",                    kind: "career-page", notes: "Asia exchange / asset manager" },
+  { name: "Kucoin",              url: "https://jobs.lever.co/kucoin",                     kind: "career-page", notes: "Centralized exchange" },
+  { name: "Bitstamp",            url: "https://boards.greenhouse.io/bitstamp",            kind: "career-page", notes: "EU exchange" },
+  { name: "Copper",              url: "https://boards.greenhouse.io/copper",              kind: "career-page", notes: "Institutional crypto custody" },
+  { name: "Zerocap",             url: "https://jobs.lever.co/zerocap",                    kind: "career-page", notes: "Institutional crypto" },
 ];

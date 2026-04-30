@@ -114,3 +114,73 @@ button {
 
 /* Prose tweaks */
 .prose-tight p { margin: 0.5rem 0; }
+
+/* -----------------------------------------------------------------------
+ * Dark-mode contrast safety net.
+ *
+ * A lot of places in the codebase use Tailwind's amber-50 / emerald-50 /
+ * rose-50 / etc. families directly. Those are great in light mode but turn
+ * into low-contrast white-on-yellow (text becomes invisible) the moment
+ * dark mode kicks in. Rather than rewrite every call site, we override
+ * the worst combinations here so the same markup reads correctly under
+ * both themes.
+ *
+ * Strategy: when [data-theme="dark"] (or prefers-color-scheme:dark for
+ * un-set users) is on, swap each pale-50 background for a transparent
+ * tinted version of the same hue and lift the foreground text into a
+ * lighter shade of the same family.
+ * --------------------------------------------------------------------- */
+[data-theme="dark"] .bg-amber-50,
+:root:not([data-theme]) .bg-amber-50 { background-color: rgba(180, 83, 9, 0.18); }
+[data-theme="dark"] .bg-amber-100,
+:root:not([data-theme]) .bg-amber-100 { background-color: rgba(180, 83, 9, 0.28); }
+[data-theme="dark"] .border-amber-200,
+:root:not([data-theme]) .border-amber-200,
+[data-theme="dark"] .border-amber-300,
+:root:not([data-theme]) .border-amber-300 { border-color: rgba(217, 119, 6, 0.55); }
+[data-theme="dark"] .text-amber-700,
+[data-theme="dark"] .text-amber-800,
+[data-theme="dark"] .text-amber-900,
+:root:not([data-theme]) .text-amber-700,
+:root:not([data-theme]) .text-amber-800,
+:root:not([data-theme]) .text-amber-900 { color: #FCD34D; }
+
+[data-theme="dark"] .bg-emerald-50,
+:root:not([data-theme]) .bg-emerald-50 { background-color: rgba(5, 150, 105, 0.16); }
+[data-theme="dark"] .bg-emerald-100,
+:root:not([data-theme]) .bg-emerald-100 { background-color: rgba(5, 150, 105, 0.28); }
+[data-theme="dark"] .border-emerald-200,
+:root:not([data-theme]) .border-emerald-200,
+[data-theme="dark"] .border-emerald-300,
+:root:not([data-theme]) .border-emerald-300 { border-color: rgba(16, 185, 129, 0.55); }
+[data-theme="dark"] .text-emerald-700,
+[data-theme="dark"] .text-emerald-800,
+[data-theme="dark"] .text-emerald-900,
+:root:not([data-theme]) .text-emerald-700,
+:root:not([data-theme]) .text-emerald-800,
+:root:not([data-theme]) .text-emerald-900 { color: #6EE7B7; }
+
+[data-theme="dark"] .bg-rose-50,
+:root:not([data-theme]) .bg-rose-50 { background-color: rgba(190, 18, 60, 0.16); }
+[data-theme="dark"] .bg-rose-100,
+:root:not([data-theme]) .bg-rose-100 { background-color: rgba(190, 18, 60, 0.28); }
+[data-theme="dark"] .border-rose-200,
+:root:not([data-theme]) .border-rose-200,
+[data-theme="dark"] .border-rose-300,
+:root:not([data-theme]) .border-rose-300 { border-color: rgba(244, 63, 94, 0.55); }
+[data-theme="dark"] .text-rose-700,
+[data-theme="dark"] .text-rose-800,
+[data-theme="dark"] .text-rose-900,
+:root:not([data-theme]) .text-rose-700,
+:root:not([data-theme]) .text-rose-800,
+:root:not([data-theme]) .text-rose-900 { color: #FCA5A5; }
+
+[data-theme="dark"] .bg-sky-100,
+:root:not([data-theme]) .bg-sky-100 { background-color: rgba(2, 132, 199, 0.28); }
+[data-theme="dark"] .text-sky-800,
+:root:not([data-theme]) .text-sky-800 { color: #7DD3FC; }
+
+[data-theme="dark"] .bg-violet-100,
+:root:not([data-theme]) .bg-violet-100 { background-color: rgba(124, 58, 237, 0.28); }
+[data-theme="dark"] .text-violet-800,
+:root:not([data-theme]) .text-violet-800 { color: #C4B5FD; }

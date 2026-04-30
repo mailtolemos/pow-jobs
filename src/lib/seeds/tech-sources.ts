@@ -62,4 +62,34 @@ export const TECH_SEED_SOURCES: SeedSource[] = [
 
   // -------- Health / bio --------
   { name: "Recursion",              url: "https://boards.greenhouse.io/recursion",           kind: "career-page", notes: "AI drug discovery" },
+
+  // -------- More AI / ML --------
+  { name: "xAI",                    url: "https://jobs.ashbyhq.com/xai",                     kind: "career-page", notes: "Grok / xAI" },
+  { name: "Character.AI",           url: "https://jobs.ashbyhq.com/character",               kind: "career-page", notes: "AI chatbot platform" },
+  { name: "Midjourney",             url: "https://jobs.ashbyhq.com/midjourney",              kind: "career-page", notes: "Generative image" },
+  { name: "Runway",                 url: "https://jobs.lever.co/runwayml",                   kind: "career-page", notes: "Generative video" },
+  { name: "ElevenLabs",             url: "https://jobs.ashbyhq.com/elevenlabs",              kind: "career-page", notes: "Voice / audio AI" },
+  { name: "Replicate",              url: "https://jobs.ashbyhq.com/replicate",               kind: "career-page", notes: "ML model hosting" },
+  { name: "Modal",                  url: "https://jobs.ashbyhq.com/modal",                   kind: "career-page", notes: "Serverless GPU" },
+  { name: "Weights & Biases",       url: "https://jobs.ashbyhq.com/wandb",                   kind: "career-page", notes: "ML experiment tracking" },
+  { name: "Glean",                  url: "https://boards.greenhouse.io/glean",               kind: "career-page", notes: "Enterprise AI search" },
+  { name: "Sierra",                 url: "https://jobs.ashbyhq.com/sierra",                  kind: "career-page", notes: "AI agents" },
+
+  // -------- More consumer / platforms --------
+  { name: "Discord",                url: "https://boards.greenhouse.io/discord",             kind: "career-page", notes: "Voice + text chat" },
+  { name: "Shopify",                url: "https://boards.greenhouse.io/shopify",             kind: "career-page", notes: "E-commerce platform" },
+  { name: "Square (Block)",         url: "https://boards.greenhouse.io/square",              kind: "career-page", notes: "Block / Square / Cash App" },
+  { name: "Roblox",                 url: "https://boards.greenhouse.io/roblox",              kind: "career-page", notes: "Gaming platform" },
+  { name: "Niantic",                url: "https://boards.greenhouse.io/niantic",             kind: "career-page", notes: "Pokemon Go / AR" },
+  { name: "Duolingo",               url: "https://boards.greenhouse.io/duolingo",            kind: "career-page", notes: "Language learning" },
+  { name: "Coursera",               url: "https://boards.greenhouse.io/coursera",            kind: "career-page", notes: "MOOCs" },
+
+  // -------- Dev tools / infra --------
+  { name: "Render",                 url: "https://jobs.ashbyhq.com/render",                  kind: "career-page", notes: "Cloud platform" },
+  { name: "Fly.io",                 url: "https://jobs.ashbyhq.com/fly.io",                  kind: "career-page", notes: "Edge compute" },
+  { name: "Neon",                   url: "https://jobs.ashbyhq.com/neon.tech",               kind: "career-page", notes: "Serverless Postgres" },
+  { name: "PlanetScale",            url: "https://jobs.ashbyhq.com/planetscale",             kind: "career-page", notes: "Serverless MySQL" },
+  { name: "Sentry",                 url: "https://jobs.ashbyhq.com/sentry",                  kind: "career-page", notes: "Error monitoring" },
+  { name: "Cursor",                 url: "https://jobs.ashbyhq.com/cursor",                  kind: "career-page", notes: "AI code editor" },
+  { name: "Astral",                 url: "https://jobs.ashbyhq.com/astral",                  kind: "career-page", notes: "Ruff / uv / Python toolchain" },
 ];

@@ -55,18 +55,19 @@ function looksLikeSPA(html: string, text: string): string | null {
   return null;
 }
 
-export async function fetchHtmlCareerPage(sourceUrl: string, employerGuess?: string): Promise<IncomingJob[]> {
-  if (!isLLMAvailable()) {
-    throw new Error(
-      "Generic HTML fallback requires an LLM: set GROQ_API_KEY (free) or ANTHROPIC_API_KEY on Vercel and redeploy",
-    );
-  }
-  // Per-request timeout so a slow career page can't hang the whole ingest.
+// Walk paginated career pages: when we see rel="next" or a recognisable
+// "?page=N" / "/page/N/" link in the HTML, follow up to N more pages and
+// concatenate their text. This is a best-effort fix for boards that
+// paginate without JS — Workday-style SPAs still need their own adapter
+// (and we already throw a helpful error for those).
+const MAX_PAGES = 5;
+const PAGE_TIMEOUT_MS = 12_000;
+
+async function fetchHtml(url: string): Promise<string> {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 15_000);
-  let res: Response;
+  const timer = setTimeout(() => ctrl.abort(), PAGE_TIMEOUT_MS);
   try {
-    res = await fetch(sourceUrl, {
+    const r = await fetch(url, {
       headers: {
         accept: "text/html",
         "user-agent":
@@ -76,14 +77,71 @@ export async function fetchHtmlCareerPage(sourceUrl: string, employerGuess?: str
       redirect: "follow",
       signal: ctrl.signal,
     });
-  } catch (e) {
+    if (!r.ok) throw new Error(`HTML fetch ${r.status}: ${url}`);
+    return await r.text();
+  } finally {
     clearTimeout(timer);
+  }
+}
+
+function findNextPageUrl(html: string, current: string): string | null {
+  // Common shapes for a "next page" link in static HTML.
+  const patterns = [
+    /<link\s+rel=["']next["']\s+href=["']([^"']+)["']/i,
+    /<a\s+[^>]*rel=["']next["'][^>]*href=["']([^"']+)["']/i,
+    /<a\s+[^>]*href=["']([^"']+)["'][^>]*rel=["']next["']/i,
+    /<a\s+[^>]*aria-label=["'](?:next|next page)["'][^>]*href=["']([^"']+)["']/i,
+    /<a\s+[^>]*href=["']([^"']+)["'][^>]*aria-label=["'](?:next|next page)["']/i,
+  ];
+  for (const p of patterns) {
+    const m = html.match(p);
+    if (m && m[1]) {
+      try {
+        return new URL(m[1], current).toString();
+      } catch {
+        // ignore
+      }
+    }
+  }
+  return null;
+}
+
+export async function fetchHtmlCareerPage(sourceUrl: string, employerGuess?: string): Promise<IncomingJob[]> {
+  if (!isLLMAvailable()) {
+    throw new Error(
+      "Generic HTML fallback requires an LLM: set GROQ_API_KEY (free) or ANTHROPIC_API_KEY on Vercel and redeploy",
+    );
+  }
+  let firstHtml: string;
+  try {
+    firstHtml = await fetchHtml(sourceUrl);
+  } catch (e) {
     throw new Error(`HTML fetch failed: ${(e as Error).message}`);
   }
-  clearTimeout(timer);
-  if (!res.ok) throw new Error(`HTML fetch ${res.status}: ${sourceUrl}`);
-  const html = await res.text();
-  const text = stripToText(html).slice(0, 24000);
+  // Follow up to MAX_PAGES of pagination, accumulating the visible text from
+  // each page so the LLM extractor can see roles spread across multiple pages.
+  const visited = new Set<string>([sourceUrl]);
+  const accumulator: string[] = [stripToText(firstHtml)];
+  let currentHtml = firstHtml;
+  let currentUrl = sourceUrl;
+  for (let i = 0; i < MAX_PAGES - 1; i += 1) {
+    const next = findNextPageUrl(currentHtml, currentUrl);
+    if (!next || visited.has(next)) break;
+    visited.add(next);
+    try {
+      const h = await fetchHtml(next);
+      accumulator.push(stripToText(h));
+      currentHtml = h;
+      currentUrl = next;
+    } catch {
+      // One bad page shouldn't kill the rest of the ingest.
+      break;
+    }
+  }
+  const html = firstHtml;
+  // Cap the LLM input — multi-page accumulation can grow fast, and Groq has
+  // strict TPM limits.
+  const text = accumulator.join("\n\n").slice(0, 36000);
 
   // SPA early-return: if the static HTML doesn't have real content, give the
   // user an actionable message instead of silently spending an LLM call that
