@@ -112,6 +112,7 @@ function rowToJob(row: Row): Job {
     status: ((row.status as string) ?? "approved") as Job["status"],
     submitted_by_user_id: (row.submitted_by_user_id as string | null) ?? null,
     submitted_at: row.submitted_at ? toISO(row.submitted_at) : null,
+    benefits: (row.benefits as string | null) ?? null,
   };
 }
 
@@ -188,7 +189,7 @@ export async function upsertJob(j: Job): Promise<void> {
       carry_or_equity_pct, vesting_years, cliff_months, location,
       remote_policy, jurisdiction_required, visa_sponsored, regulated,
       stage, team_size_band, aum_usd, source_url, source_channel,
-      date_posted, date_last_seen, is_open, employer_verified
+      date_posted, date_last_seen, is_open, employer_verified, benefits
     ) VALUES (
       ${j.id}, ${j.title_raw}, ${j.title_normalized}, ${j.employer}, ${j.employer_category},
       ${j.domain}, ${j.function}, ${j.seniority}, ${JSON.stringify(j.tech_stack)}::jsonb, ${j.department}, ${j.description},
@@ -196,7 +197,7 @@ export async function upsertJob(j: Job): Promise<void> {
       ${j.carry_or_equity_pct}, ${j.vesting_years}, ${j.cliff_months}, ${j.location},
       ${j.remote_policy}, ${j.jurisdiction_required}, ${j.visa_sponsored}, ${j.regulated},
       ${j.stage}, ${j.team_size_band}, ${j.aum_usd}, ${j.source_url}, ${j.source_channel},
-      ${j.date_posted}, ${j.date_last_seen}, ${j.is_open}, ${j.employer_verified}
+      ${j.date_posted}, ${j.date_last_seen}, ${j.is_open}, ${j.employer_verified}, ${j.benefits ?? null}
     )
     ON CONFLICT (id) DO UPDATE SET
       title_raw = EXCLUDED.title_raw,
@@ -229,7 +230,8 @@ export async function upsertJob(j: Job): Promise<void> {
       date_posted = EXCLUDED.date_posted,
       date_last_seen = EXCLUDED.date_last_seen,
       is_open = EXCLUDED.is_open,
-      employer_verified = EXCLUDED.employer_verified
+      employer_verified = EXCLUDED.employer_verified,
+      benefits = COALESCE(EXCLUDED.benefits, jobs.benefits)
   `;
 }
 
@@ -1008,6 +1010,79 @@ export async function findDuplicateJob(opts: {
 export async function touchJobLastSeen(id: string): Promise<void> {
   await ensureSchema();
   await sql()`UPDATE jobs SET date_last_seen = NOW() WHERE id = ${id}`;
+}
+
+// --- Ingest run log -----------------------------------------------------
+
+export interface IngestRunRow {
+  id: number;
+  source_id: string | null;
+  mode: string;
+  fetched: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  broadcast_sent: number;
+  errors: number;
+  duration_ms: number;
+  error_text: string | null;
+  ran_at: string;
+}
+
+export async function recordIngestRun(input: {
+  source_id: string | null;
+  mode: string;
+  fetched: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  broadcast_sent: number;
+  errors: number;
+  duration_ms: number;
+  error_text?: string | null;
+}): Promise<void> {
+  await ensureSchema();
+  await sql()`
+    INSERT INTO ingest_runs (
+      source_id, mode, fetched, created, updated, skipped,
+      broadcast_sent, errors, duration_ms, error_text
+    ) VALUES (
+      ${input.source_id}, ${input.mode}, ${input.fetched}, ${input.created},
+      ${input.updated}, ${input.skipped}, ${input.broadcast_sent},
+      ${input.errors}, ${input.duration_ms}, ${input.error_text ?? null}
+    )
+  `;
+  // Trim to most-recent 1000 rows so this never grows unbounded. We do this
+  // ~10% of the time via a probabilistic gate to avoid hammering the db with
+  // a DELETE on every single tick.
+  if (Math.random() < 0.1) {
+    await sql()`
+      DELETE FROM ingest_runs WHERE id IN (
+        SELECT id FROM ingest_runs ORDER BY id DESC OFFSET 1000
+      )
+    `.catch(() => undefined);
+  }
+}
+
+export async function listRecentIngestRuns(limit = 50): Promise<IngestRunRow[]> {
+  await ensureSchema();
+  const rows = (await sql()`
+    SELECT * FROM ingest_runs ORDER BY ran_at DESC LIMIT ${limit}
+  `) as Row[];
+  return rows.map((r) => ({
+    id: Number(r.id),
+    source_id: (r.source_id as string | null) ?? null,
+    mode: (r.mode as string) ?? "unknown",
+    fetched: Number(r.fetched ?? 0),
+    created: Number(r.created ?? 0),
+    updated: Number(r.updated ?? 0),
+    skipped: Number(r.skipped ?? 0),
+    broadcast_sent: Number(r.broadcast_sent ?? 0),
+    errors: Number(r.errors ?? 0),
+    duration_ms: Number(r.duration_ms ?? 0),
+    error_text: (r.error_text as string | null) ?? null,
+    ran_at: toISO(r.ran_at),
+  }));
 }
 
 // --- Settings (DB-backed key/value store) -------------------------------

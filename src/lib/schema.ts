@@ -201,4 +201,30 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Diagnostic log for cron ticks. Every ingest run writes a row here so the
+-- admin dashboard can answer "is the cron actually running?" at a glance.
+-- Bounded write rate (~one row per source per tick, max ~30/hour) keeps
+-- this table cheap; we trim to last 1000 rows lazily.
+CREATE TABLE IF NOT EXISTS ingest_runs (
+  id BIGSERIAL PRIMARY KEY,
+  source_id TEXT,
+  mode TEXT NOT NULL,
+  fetched INTEGER NOT NULL DEFAULT 0,
+  created INTEGER NOT NULL DEFAULT 0,
+  updated INTEGER NOT NULL DEFAULT 0,
+  skipped INTEGER NOT NULL DEFAULT 0,
+  broadcast_sent INTEGER NOT NULL DEFAULT 0,
+  errors INTEGER NOT NULL DEFAULT 0,
+  duration_ms INTEGER NOT NULL DEFAULT 0,
+  error_text TEXT,
+  ran_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ingest_runs_ran_at ON ingest_runs(ran_at DESC);
+
+-- Benefits snapshot pulled by the LLM during classify (e.g. "Health, dental,
+-- 4 weeks PTO, equity"). Optional, ~280 chars max so it fits in a Telegram
+-- message and a job-card line. Older rows have NULL.
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS benefits TEXT;
 `;

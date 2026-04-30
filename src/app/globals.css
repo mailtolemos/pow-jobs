@@ -58,11 +58,58 @@
 html, body {
   background: rgb(var(--color-paper));
   color: rgb(var(--color-ink));
+  /* Slightly nicer rendering on macOS / Linux. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   font-feature-settings: "ss01", "cv02", "cv11";
   transition: background-color 160ms ease, color 160ms ease;
+}
+
+/* Sitewide focus ring — keyboard users get a clear indicator without
+   stomping on the per-component look. Uses the accent token so it
+   adapts to light/dark theme automatically. */
+:focus-visible {
+  outline: 2px solid rgb(var(--color-accent) / 0.7);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Smoother form-control hover/focus across the app. */
+input,
+textarea,
+select,
+button {
+  transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+/* Selection highlight uses the accent so it's on-brand. */
+::selection {
+  background: rgb(var(--color-accent) / 0.25);
+  color: rgb(var(--color-ink));
+}
+
+/* Dot scrollbar that doesn't feel like a Windows 95 leftover on Chrome. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--color-line)) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-line));
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-muted) / 0.5);
 }
 
 /* Prose tweaks */

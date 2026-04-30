@@ -112,7 +112,7 @@ function heuristicClassify(inc: IncomingJob): Partial<Job> {
 
 // --- Claude-backed classification -------------------------------------------
 
-const SYSTEM = `You classify a single job posting into a strict JSON schema used by a crypto+finance jobs board called ProWo. Return JSON ONLY, no prose.
+const SYSTEM = `You classify a single job posting into a strict JSON schema used by a tech / crypto / finance jobs board called ProWo. Return JSON ONLY, no prose.
 
 Schema (all fields required, use null only where marked nullable):
 {
@@ -120,21 +120,24 @@ Schema (all fields required, use null only where marked nullable):
   "function": one of [${ALL_FUNCTIONS.map((f) => `"${f}"`).join(", ")}],
   "seniority": one of [${ALL_SENIORITY.map((s) => `"${s}"`).join(", ")}],
   "tech_stack": string[] (short canonical names like "Rust", "Solidity", "Python", "Kubernetes"),
-  "employer_category": short human label like "Crypto protocol", "Prop shop", "Hedge fund", "Fintech",
+  "employer_category": short human label like "Crypto protocol", "Prop shop", "Hedge fund", "Fintech", "AI lab", "SaaS",
   "stage": one of [${ALL_STAGES.map((s) => `"${s}"`).join(", ")}],
   "remote_policy": one of ["onsite","hybrid","remote-regional","remote-global"],
   "jurisdiction_required": one of ["us","eu","uk","apac","latam","global"],
   "visa_sponsored": boolean,
   "regulated": boolean (true if role works under MiFID/SEC/FCA/etc.),
-  "base_min_usd": integer|null,
-  "base_max_usd": integer|null,
+  "base_min_usd": integer|null (annual base in USD; convert from EUR/GBP/etc. at rough parity if not USD; if a range is given, return the low end),
+  "base_max_usd": integer|null (annual base in USD; high end of the range),
   "token_pct_target": number|null (e.g. 30 meaning 30% of total comp in tokens; infer from language),
   "carry_or_equity_pct": number|null,
   "team_size_band": one of ["1-10","10-50","50-200","200+"]|null,
-  "summary": string (2-3 sentence plain-English description)
+  "summary": string (2-3 sentence plain-English description),
+  "benefits": string|null (one short comma-separated line, max 220 chars, of perks the posting mentions: health, dental, PTO weeks, 401k match, parental leave, learning budget, equipment, equity refresh, token grants, etc. Set null if the posting says nothing about benefits.)
 }
 
-Be conservative: if unsure of comp, set null. If the role isn't crypto or finance at all, still pick the closest domain.`;
+Be aggressive about extracting comp: if the posting lists ANY salary number, range, or band — even if buried in a "compensation" or "salary" section — pull it into base_min_usd / base_max_usd. Convert non-USD currencies at rough parity (EUR/GBP/CHF ≈ USD; CAD ≈ 0.75 USD; AUD ≈ 0.65 USD). Only set null when the posting is genuinely silent on numbers.
+
+If the role isn't crypto, finance, or tech at all, still pick the closest domain.`;
 
 interface LLMClassification {
   domain: Domain;
@@ -153,15 +156,18 @@ interface LLMClassification {
   carry_or_equity_pct: number | null;
   team_size_band: string | null;
   summary: string;
+  benefits: string | null;
 }
 
 async function llmClassify(inc: IncomingJob): Promise<{ data: LLMClassification | null; error: string | null }> {
   if (!isLLMAvailable()) {
     return { data: null, error: "no LLM provider configured (set GROQ_API_KEY or ANTHROPIC_API_KEY)" };
   }
-  // Keep each classification under ~1.5k tokens (~6k chars). Enough signal to
-  // pick domain/seniority/tech, without burning through Groq's free-tier TPM.
-  const descr = (inc.description_text || inc.description_html || "").slice(0, 3500);
+  // Send a wider window than before so the LLM can see comp + benefits
+  // sections, which are usually near the bottom of a posting. ~5k chars
+  // (~1.3k tokens) is still well under Groq's free-tier TPM cap when
+  // combined with the system prompt and 768 max-output tokens.
+  const descr = (inc.description_text || inc.description_html || "").slice(0, 5200);
   const user = `Employer: ${inc.employer}
 Title: ${inc.title}
 Department: ${inc.department ?? "—"}
@@ -242,6 +248,17 @@ export async function classifyIncoming(
   const fallback = cleaned ? cleaned.slice(0, 2000) : inc.title;
   const description = llm?.summary?.trim() || fallback;
 
+  // Trim benefits to a tight one-liner so it fits a Telegram line and a
+  // job-card row. Strip leading "Benefits:" / "Perks:" prefixes the LLM
+  // sometimes prepends, and clamp at 240 chars.
+  const benefits =
+    llm?.benefits != null
+      ? llm.benefits
+          .replace(/^\s*(benefits?|perks?)\s*[:\-—]\s*/i, "")
+          .trim()
+          .slice(0, 240)
+      : null;
+
   const job: Job = {
     id,
     title_raw: inc.title,
@@ -275,6 +292,7 @@ export async function classifyIncoming(
     date_last_seen: now,
     is_open: true,
     employer_verified: false,
+    benefits: benefits && benefits.length >= 6 ? benefits : null,
   };
   return { job, llm_used, llm_error };
 }

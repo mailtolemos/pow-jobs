@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import type { Job } from "@/lib/types";
 import { employerBoardUrl } from "@/lib/employer-url";
 
@@ -357,14 +358,12 @@ function JobRow({ job }: { job: Job }) {
     <article className="bg-surface border border-line rounded-xl p-4 hover:border-accent/60 transition">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0 flex-1">
-          <a
-            href={job.source_url}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href={`/job/${encodeURIComponent(job.id)}`}
             className="text-ink font-semibold hover:underline break-words"
           >
             {job.title_raw}
-          </a>
+          </Link>
           <div className="text-sm text-muted mt-0.5">
             {(() => {
               const board = employerBoardUrl(job);
@@ -398,6 +397,12 @@ function JobRow({ job }: { job: Job }) {
               </Tag>
             ))}
           </div>
+          {job.benefits && (
+            <div className="mt-2 text-xs text-muted flex items-start gap-1.5">
+              <span aria-hidden>🎁</span>
+              <span className="line-clamp-2">{job.benefits}</span>
+            </div>
+          )}
         </div>
         <div className="text-right text-xs text-muted shrink-0">
           {comp && <div className="text-ink font-semibold text-sm">{comp}</div>}

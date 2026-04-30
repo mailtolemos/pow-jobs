@@ -119,18 +119,23 @@ export function buildBroadcastMessage(job: Job): string {
   lines.push(`<i>${escapeHTML(meta.join(" · "))}</i>`);
   const comp = fmtComp(job);
   if (comp) lines.push(`💰 ${comp}`);
+  if (job.benefits) {
+    lines.push(`🎁 ${escapeHTML(job.benefits)}`);
+  }
   if (job.tech_stack.length > 0) {
     lines.push(`🛠️ ${escapeHTML(job.tech_stack.slice(0, 6).join(", "))}`);
   }
   // Clean snippet — strips any lingering HTML, decodes entities, trims to
   // ~280 chars, skips fluffy intros. The store may already hold clean text
   // for new ingests; this is also a safety net for older rows.
-  const snippet = htmlToSnippet(job.description, 280);
+  const snippet = htmlToSnippet(job.description, 260);
   if (snippet) {
     lines.push("");
     lines.push(escapeHTML(snippet));
   }
   lines.push("");
+  // job.source_url comes from the ATS adapter and points at the SPECIFIC
+  // job page on Greenhouse / Ashby / Lever, not the board root.
   lines.push(`<a href="${escapeHTML(job.source_url)}">Apply →</a>`);
   return lines.join("\n");
 }

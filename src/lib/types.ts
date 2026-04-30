@@ -89,6 +89,9 @@ export interface Job {
   status?: "approved" | "pending" | "rejected";
   submitted_by_user_id?: string | null;
   submitted_at?: string | null;
+  // Short LLM-extracted benefits snapshot (~280 chars). Surfaces in Telegram
+  // broadcasts and on job cards so candidates see comp + perks at a glance.
+  benefits?: string | null;
 }
 
 export interface Candidate {

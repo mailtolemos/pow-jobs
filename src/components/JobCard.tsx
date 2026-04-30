@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Job, MatchScore } from "@/lib/types";
 import { employerBoardUrl } from "@/lib/employer-url";
 import { htmlToSnippet } from "@/lib/html-strip";
@@ -30,7 +31,14 @@ export function JobCard({ job, match, onSave, onDismiss }: Props) {
     <article className="bg-surface border border-line rounded-xl p-5 hover:border-line transition">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h3 className="font-semibold text-ink text-lg truncate">{job.title_raw}</h3>
+          <h3 className="font-semibold text-ink text-lg truncate">
+            <Link
+              href={`/job/${encodeURIComponent(job.id)}`}
+              className="hover:text-accent hover:underline"
+            >
+              {job.title_raw}
+            </Link>
+          </h3>
           <div className="text-sm text-muted mt-0.5">
             {(() => {
               const board = employerBoardUrl(job);
@@ -66,7 +74,18 @@ export function JobCard({ job, match, onSave, onDismiss }: Props) {
         )}
       </div>
 
-      <div className="mt-3 text-sm text-ink">{compLine(job)}</div>
+      {compLine(job) && (
+        <div className="mt-3 text-sm text-ink flex items-start gap-1.5">
+          <span aria-hidden>💰</span>
+          <span>{compLine(job)}</span>
+        </div>
+      )}
+      {job.benefits && (
+        <div className="mt-1.5 text-xs text-muted flex items-start gap-1.5">
+          <span aria-hidden>🎁</span>
+          <span>{job.benefits}</span>
+        </div>
+      )}
 
       <div className="mt-2 flex flex-wrap gap-1.5">
         <Chip label={job.domain} tone="accent" />

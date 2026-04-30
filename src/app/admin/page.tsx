@@ -1,4 +1,4 @@
-import { listSources, listJobs, listCandidates, getIngestStats } from "@/lib/db";
+import { listSources, listJobs, listCandidates, getIngestStats, listRecentIngestRuns } from "@/lib/db";
 import { AdminSourcesClient } from "./AdminSourcesClient";
 import { BroadcastPanel } from "./BroadcastPanel";
 import { CronInfoPanel } from "./CronInfoPanel";
@@ -7,11 +7,12 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   // Auth is gated by /admin/layout.tsx.
-  const [sources, jobs, candidates, stats] = await Promise.all([
+  const [sources, jobs, candidates, stats, recentRuns] = await Promise.all([
     listSources(),
     listJobs({ openOnly: false }),
     listCandidates(),
     getIngestStats(),
+    listRecentIngestRuns(20),
   ]);
 
   const byDomain: Record<string, number> = {};
@@ -66,6 +67,70 @@ export default async function AdminPage() {
         <BroadcastPanel />
         <CronInfoPanel />
       </div>
+
+      {/* Recent cron heartbeat — quickest way to confirm cron-job.org is
+          actually pinging us, and what each tick is doing. If this list
+          stops growing, cron is broken (not the broadcast). */}
+      <section className="bg-surface border border-line rounded-xl p-4 mb-6">
+        <div className="flex items-baseline justify-between gap-3 flex-wrap mb-3">
+          <h2 className="text-xl font-semibold text-ink">Recent cron ticks</h2>
+          <span className="text-xs text-muted">
+            Last {recentRuns.length} runs · newest first
+          </span>
+        </div>
+        {recentRuns.length === 0 ? (
+          <div className="text-sm text-muted">
+            No runs yet. Once cron-job.org pings the URL above, ticks will show up here.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead className="text-muted text-xs uppercase tracking-wider">
+                <tr>
+                  <th className="text-left py-1.5 pr-3 font-medium">When</th>
+                  <th className="text-left py-1.5 pr-3 font-medium">Mode</th>
+                  <th className="text-left py-1.5 pr-3 font-medium">Source</th>
+                  <th className="text-right py-1.5 pr-3 font-medium">Created</th>
+                  <th className="text-right py-1.5 pr-3 font-medium">Updated</th>
+                  <th className="text-right py-1.5 pr-3 font-medium">Broadcast</th>
+                  <th className="text-right py-1.5 pr-3 font-medium">Errors</th>
+                  <th className="text-right py-1.5 font-medium">Duration</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentRuns.map((r) => (
+                  <tr key={r.id} className="border-t border-line/60">
+                    <td className="py-1.5 pr-3 text-muted text-xs">{fmtRel(r.ran_at)}</td>
+                    <td className="py-1.5 pr-3 text-xs">{r.mode}</td>
+                    <td className="py-1.5 pr-3 text-xs truncate max-w-[160px]" title={r.source_id ?? ""}>
+                      {r.source_id ?? "-"}
+                    </td>
+                    <td className="py-1.5 pr-3 text-right text-xs font-medium text-ink">
+                      {r.created || ""}
+                    </td>
+                    <td className="py-1.5 pr-3 text-right text-xs text-muted">{r.updated || ""}</td>
+                    <td className="py-1.5 pr-3 text-right text-xs text-emerald-700">
+                      {r.broadcast_sent || ""}
+                    </td>
+                    <td className="py-1.5 pr-3 text-right text-xs">
+                      {r.errors > 0 ? (
+                        <span className="text-rose-700 font-medium" title={r.error_text ?? ""}>
+                          {r.errors}
+                        </span>
+                      ) : (
+                        ""
+                      )}
+                    </td>
+                    <td className="py-1.5 text-right text-xs text-muted">
+                      {(r.duration_ms / 1000).toFixed(1)}s
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       <AdminSourcesClient initial={sources} />
     </div>

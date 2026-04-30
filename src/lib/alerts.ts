@@ -37,10 +37,12 @@ function formatJobForTelegram(job: Job, match: MatchScore): string {
     : "comp not disclosed";
   const tokenNote = job.token_pct_target ? `, ${job.token_pct_target}% token` : "";
   const url = job.source_url;
+  const benefitsLine = job.benefits ? `\n🎁 ${escapeTg(job.benefits)}` : "";
   return (
     `<b>${escapeTg(job.title_raw)}</b> · <i>${escapeTg(job.employer)}</i>\n` +
     `${escapeTg(job.location)} · ${escapeTg(job.remote_policy)}\n` +
-    `${escapeTg(comp)}${escapeTg(tokenNote)}\n` +
+    `💰 ${escapeTg(comp)}${escapeTg(tokenNote)}` +
+    `${benefitsLine}\n` +
     `<b>${pct}% match</b>: ${escapeTg(match.rationale)}\n\n` +
     (url ? `<a href="${escapeTg(url)}">View role</a>` : "")
   );
